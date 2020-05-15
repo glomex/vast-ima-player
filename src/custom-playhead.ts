@@ -12,21 +12,21 @@ export class CustomPlayhead {
     this.#currentTime = 0;
     this.#enabled = false;
     this.seeking = false;
-    this._ontimeupdate = this._ontimeupdate.bind(this);
-    this._onseeking = this._onseeking.bind(this);
-    this._onseeked = this._onseeked.bind(this);
+    this._onTimeupdate = this._onTimeupdate.bind(this);
+    this._onSeeking = this._onSeeking.bind(this);
+    this._onSeeked = this._onSeeked.bind(this);
     this.enable();
   }
 
-  private _onseeking() {
+  private _onSeeking() {
     this.seeking = true;
   }
 
-  private _onseeked() {
+  private _onSeeked() {
     this.seeking = false;
   }
 
-  private _ontimeupdate() {
+  private _onTimeupdate() {
     if (!this.seeking && !this.#mediaElement.paused) {
       this.#currentTime = this.#mediaElement.currentTime;
     }
@@ -38,17 +38,17 @@ export class CustomPlayhead {
 
   enable() {
     if (this.#enabled) return;
-    this.#mediaElement.addEventListener('seeking', this._onseeking);
-    this.#mediaElement.addEventListener('seeked', this._onseeked);
-    this.#mediaElement.addEventListener('timeupdate', this._ontimeupdate);
+    this.#mediaElement.addEventListener('seeking', this._onSeeking);
+    this.#mediaElement.addEventListener('seeked', this._onSeeked);
+    this.#mediaElement.addEventListener('timeupdate', this._onTimeupdate);
     this.#enabled = true;
   }
 
   disable() {
     if (!this.#enabled) return;
-    this.#mediaElement.removeEventListener('seeking', this._onseeking);
-    this.#mediaElement.removeEventListener('seeked', this._onseeked);
-    this.#mediaElement.removeEventListener('timeupdate', this._ontimeupdate);
+    this.#mediaElement.removeEventListener('seeking', this._onSeeking);
+    this.#mediaElement.removeEventListener('seeked', this._onSeeked);
+    this.#mediaElement.removeEventListener('timeupdate', this._onTimeupdate);
     this.#enabled = false;
   }
 
