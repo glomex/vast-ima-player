@@ -23,6 +23,7 @@
     "serve": "^11.3.0"
   },
   "dependencies": {
-    "@alugha/ima": "^1.2.0"
+    "@alugha/ima": "^1.2.0",
+    "@ungap/custom-event": "^0.3.0"
   }
 }

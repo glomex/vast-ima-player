@@ -1,4 +1,5 @@
 import type { ImaSdk } from '@alugha/ima';
+import CustomEvent from '@ungap/custom-event';
 import { CustomPlayhead } from './custom-playhead';
 import { DelegatedEventTarget } from './delegated-event-target';
 
@@ -109,13 +110,29 @@ export class AdImaPlayer extends DelegatedEventTarget {
       false
     );
 
-    // @ts-ignore
-    if (options.autoResize && window.ResizeObserver) {
+    // initial synchronization of width / height
+    const { offsetHeight, offsetWidth } = this.#mediaElement;
+    this.#width = offsetWidth;
+    this.#height = offsetHeight;
+
+    if (options.autoResize) {
       // @ts-ignore
-      this.#resizeObserver = new window.ResizeObserver(
-        (entries) => this._resizeObserverCallback(entries)
-      );
-      this.#resizeObserver.observe(this.#mediaElement);
+      if (window.ResizeObserver) {
+        // @ts-ignore
+        this.#resizeObserver = new window.ResizeObserver(
+          (entries) => this._resizeObserverCallback(entries)
+        );
+        this.#resizeObserver.observe(this.#mediaElement);
+      } else {
+        // in case ResizeObserver is not supported we want
+        // to use at least the size after video got loaded
+        this.#mediaElement.addEventListener('loadedmetadata', () => {
+          const { offsetHeight, offsetWidth } = this.#mediaElement;
+          this.#width = offsetWidth;
+          this.#height = offsetHeight;
+          this._resizeAdsManager();
+        });
+      }
     }
   }
 
@@ -135,10 +152,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
   }
 
   playAds(adsRequest: google.ima.AdsRequest) {
-    const { offsetHeight, offsetWidth, muted } = this.#mediaElement;
-    // for browsers that don't support ResizeObserver
-    this.#width = offsetWidth;
-    this.#height = offsetHeight;
+    const { muted } = this.#mediaElement;
     this.reset();
     this.activate();
 
@@ -192,7 +206,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
     }
   }
 
-  resizeAdsManager(width: number, height: number) {
+  resize(width: number, height: number) {
     this.#width = width;
     this.#height = height;
     if (this.#adsManager) {
@@ -256,7 +270,6 @@ export class AdImaPlayer extends DelegatedEventTarget {
         this._mediaElementEnded();
       }
       this.dispatchEvent(new CustomEvent(event.type));
-      return;
     }
   }
 
@@ -269,23 +282,12 @@ export class AdImaPlayer extends DelegatedEventTarget {
       case AdEvent.Type.STARTED:
         const ad = this.#currentAd = event.getAd();
         this.#adElement.classList.remove('nonlinear');
+        this._resizeAdsManager();
         // single or non-linear ads
         if (!ad.isLinear()) {
-          if (this.#adImaPlayerOptions.autoResize) {
-            // in case we won't add 8 pixels it triggers a VAST error
-            // that there is not enough space to render the ad
-            this.#adsManager.resize(
-              ad.getWidth(), ad.getHeight() + 8, this._getViewMode()
-            );
-          }
           this.#adElement.classList.add('nonlinear');
           this._playContent();
         } else {
-          if (this.#adImaPlayerOptions.autoResize) {
-            this.#adsManager.resize(
-              this.#width, this.#height, this._getViewMode()
-            );
-          }
           this.#customPlayhead.disable();
         }
         this.#adElementChild.style.pointerEvents = 'auto';
@@ -392,15 +394,26 @@ export class AdImaPlayer extends DelegatedEventTarget {
         this.#height = entry.contentRect.height;
       }
     }
+    this._resizeAdsManager();
+  }
 
-    const isNonLinearAd = this.#currentAd && !this.#currentAd.isLinear();
-    const isNonLinearAdTooBig = isNonLinearAd && (
-      this.#currentAd.getWidth() > this.#width
-      || this.#currentAd.getHeight() > this.#height
-    );
+  private _resizeAdsManager() {
+    if (!this.#adImaPlayerOptions.autoResize || !this.#adsManager) return;
 
-    if (this.#adsManager && (!isNonLinearAd || isNonLinearAdTooBig)) {
-      this.#adsManager.resize(this.#width, this.#height, this._getViewMode());
+    const ad = this.#currentAd;
+    const viewMode = this._getViewMode();
+    const isNonLinearAd = ad && !ad.isLinear();
+
+    if (!isNonLinearAd) {
+      this.#adsManager.resize(this.#width, this.#height, viewMode);
+    } else if (ad) {
+      if (ad.getWidth() > this.#width || ad.getHeight() > this.#height) {
+        this.#adsManager.resize(this.#width, this.#height, viewMode);
+      } else {
+        // in case we won't add 8 pixels it triggers a VAST error
+        // that there is not enough space to render the nonlinear ad
+        this.#adsManager.resize(ad.getWidth(), ad.getHeight() + 8, viewMode);
+      }
     }
   }
 
@@ -443,10 +456,6 @@ export class AdImaPlayer extends DelegatedEventTarget {
     }));
     this._playContent();
     this.#adElement.classList.remove('nonlinear');
-    if (this.#adImaPlayerOptions.autoResize) {
-      this.#adsManager.resize(
-        this.#width, this.#height, this._getViewMode()
-      );
-    }
+    this._resizeAdsManager();
   }
 }
