@@ -91,10 +91,12 @@ enum ImaOverridenAdEventTypes {
 type AdImaPlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
 
 /**
- * Available events of the ad-ima-player. It also triggers
- * the normal media element events (timeupdate, play, pause, ...)
- * when the content playback happens. Those event names are not
- * enumerated here because they are known.
+ * Available events of the ad-ima-player.
+ *
+ * It also triggers the normal media element events (timeupdate, play, pause, ...)
+ * when the content playback happens. This is useful when "disableCustomPlaybackForIOS10Plus"
+ * is configured and the same media element is used on iOS to render both ad and content.
+ * Those event names are not enumerated here because they are known.
  */
 export const AdImaPlayerEvent = {
   ...ImaOverridenAdEventTypes,
