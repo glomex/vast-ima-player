@@ -227,6 +227,8 @@ export class AdImaPlayer extends DelegatedEventTarget {
     this.#adElement.classList.remove('nonlinear');
     this.#cuePoints = [];
     if (this.#adsManager) {
+      // just ensure to start from defined width/height
+      this._resizeAdsManager();
       // see https://developers.google.com/interactive-media-ads/docs/sdks/html5/faq#8
       this.#adsManager.destroy();
       this.#adsLoader.contentComplete();
