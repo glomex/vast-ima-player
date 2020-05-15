@@ -13,6 +13,94 @@ const MEDIA_ELEMENT_EVENTS = [
   'volumechange', 'waiting'
 ];
 
+/**
+ * Additional media events that help managing the
+ * lifecycle of a media file playback.
+ */
+enum AdditionalMediaEvent {
+  /** Fired when initial media file play happened. */
+  MEDIA_START = 'MediaStart',
+  /** Fired when the first frame of the media file is played after linear preroll. */
+  MEDIA_IMPRESSION = 'MediaImpression',
+  /** Fired when the media file playback finished after potential postroll. */
+  MEDIA_STOP = 'MediaStop'
+}
+
+/**
+ * Adjusted enum of https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdEvent
+ * to follow VPAID spec event names.
+ */
+enum ImaOverridenAdEventTypes {
+  /** Fired when an ad rule or a VMAP ad break would have played if autoPlayAdBreaks is false. */
+  AD_BREAK_READY = 'AdBreakReady',
+  /** Fired when the ad has stalled playback to buffer. */
+  AD_BUFFERING = 'AdBuffering',
+  AD_CAN_PLAY = 'AdCanPlay',
+  /** Fired when an ads list is loaded. */
+  AD_METADATA = 'AdMetadata',
+  /** Fired when the ad's current time value changes. Calling getAdData() on this event will return an AdProgressData object. */
+  AD_PROGRESS = 'AdProgress',
+  /** Fired when the ads manager is done playing all the ads. */
+  ALL_ADS_COMPLETED = 'AdAllAdsCompleted',
+  /** Fired when the ad is clicked. */
+  CLICK = 'AdClick',
+  /** Fired when the ad completes playing. */
+  COMPLETE = 'AdComplete',
+  /** Fired when content should be paused. This usually happens right before an ad is about to cover the content. */
+  CONTENT_PAUSE_REQUESTED = 'AdContentPauseRequested',
+  /** Fired when content should be resumed. This usually happens when an ad finishes or collapses. */
+  CONTENT_RESUME_REQUESTED = 'AdContentResumeRequested',
+  /** Fired when the ad's duration changes. */
+  DURATION_CHANGE = 'AdDurationChange',
+  EXPANDED_CHANGED = 'AdExpandedChanged',
+  /** Fired when the ad playhead crosses first quartile. */
+  FIRST_QUARTILE = 'AdFirstQuartile',
+  /** Fired when the impression URL has been pinged. */
+  IMPRESSION = 'AdImpression',
+  /** Fired when an ad triggers the interaction callback. Ad interactions contain an interaction ID string in the ad data. */
+  INTERACTION = 'AdInteraction',
+  /** Fired when the displayed ad changes from linear to nonlinear, or vice versa. */
+  LINEAR_CHANGED = 'AdLinearChanged',
+  /** Fired when ad data is available. */
+  LOADED = 'AdLoaded',
+  /** Fired when a non-fatal error is encountered. The user need not take any action since the SDK will continue with the same or next ad playback depending on the error situation. */
+  LOG = 'AdLog',
+  /** Fired when the ad playhead crosses midpoint. */
+  MIDPOINT = 'AdMidpoint',
+  /** Fired when the ad is paused. */
+  PAUSED = 'AdPaused',
+  /** Fired when the ad is resumed. */
+  RESUMED = 'AdResumed',
+  /** Fired when the displayed ads skippable state is changed. */
+  SKIPPABLE_STATE_CHANGED = 'AdSkippableStateChanged',
+  /** Fired when the ad is skipped by the user. */
+  SKIPPED = 'AdSkipped',
+  /** Fired when the ad starts playing. */
+  STARTED = 'AdStarted',
+  /** Fired when the ad playhead crosses third quartile. */
+  THIRD_QUARTILE = 'AdThirdQuartile',
+  /** Fired when the ad is closed by the user. */
+  USER_CLOSE = 'AdUserClose',
+  VIEWABLE_IMPRESSION = 'AdViewableImpression',
+  /** Fired when the ad volume has changed. */
+  VOLUME_CHANGED = 'AdVolumeChanged',
+  /** Fired when the ad volume has been muted. */
+  VOLUME_MUTED = 'AdMuted'
+}
+
+type AdImaPlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
+
+/**
+ * Available events of the ad-ima-player. It also triggers
+ * the normal media element events (timeupdate, play, pause, ...)
+ * when the content playback happens. Those event names are not
+ * enumerated here because they are known.
+ */
+export const AdImaPlayerEvent = {
+  ...ImaOverridenAdEventTypes,
+  ...AdditionalMediaEvent,
+};
+
 export class AdImaPlayerError extends Error {
   errorCode: number;
   innerError: Error;
@@ -29,7 +117,7 @@ export class AdImaPlayerOptions {
   disableCustomPlaybackForIOS10Plus: boolean = false;
   /** Enables or disables auto resizing of adsManager. If enabled it also resizes non-linear ads. */
   autoResize: boolean = true;
-  /** Allows to have a separate "Learn More" click tracking element on mobile. */
+  /** Allows to have a separate 'Learn More' click tracking element on mobile. */
   clickTrackingElement?: HTMLElement
 }
 
@@ -76,7 +164,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
       adElement,
       // used as single element for linear ad playback on iOS
       disableCustomPlaybackForIOS10Plus ? undefined : mediaElement,
-      // allows to override the "Learn More" button on mobile
+      // allows to override the 'Learn More' button on mobile
       options.clickTrackingElement
     );
     this.#adElementChild = <HTMLElement>adElement.firstChild;
@@ -137,7 +225,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
   }
 
   activate() {
-    // activate assigned mediaElement for future "play" calls
+    // activate assigned mediaElement for future 'play' calls
     if (!this.#mediaElement.dataset.activated) {
       // ignore play result
       try {
@@ -259,13 +347,17 @@ export class AdImaPlayer extends DelegatedEventTarget {
         && !this.#mediaImpressionTriggered
         && this.#customPlayhead.currentTime !== 0
       ) {
-        this.dispatchEvent(new CustomEvent('MediaImpression'));
+        this.dispatchEvent(
+          new CustomEvent(AdImaPlayerEvent.MEDIA_IMPRESSION)
+        );
         this.#mediaImpressionTriggered = true;
       }
       if (event.type === 'play'
         && !this.#mediaStartTriggered
       ) {
-        this.dispatchEvent(new CustomEvent('MediaStart'));
+        this.dispatchEvent(
+          new CustomEvent(AdImaPlayerEvent.MEDIA_START)
+        );
         this.#mediaStartTriggered = true;
       }
       if (event.type === 'ended') {
@@ -277,10 +369,9 @@ export class AdImaPlayer extends DelegatedEventTarget {
 
   private _handleAdsManagerEvents(event: google.ima.AdEvent) {
     const { AdEvent } = this.#ima;
-    // @ts-ignore
-    const { type, target } = event;
 
-    switch(type) {
+    // @ts-ignore
+    switch(event.type) {
       case AdEvent.Type.STARTED:
         const ad = this.#currentAd = event.getAd();
         this.#adElement.classList.remove('nonlinear');
@@ -328,22 +419,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
         break;
       case AdEvent.Type.AD_METADATA:
         this.#cuePoints = this.#adsManager.getCuePoints();
-    }
-
-    if (target === this.#adsManager
-      && type.indexOf('content') === -1
-    ) {
-      const startsWithAd = type.indexOf('ad') === 0;
-      const eventName = `${startsWithAd ? '' : 'Ad'}${
-        type.charAt(0).toUpperCase() + type.slice(1)
-      }`;
-      this.dispatchEvent(new CustomEvent(eventName, {
-        detail: {
-          imaAd: this.#currentAd || event.getAd(),
-          adData: event.getAdData(),
-          cuePoints: this.#cuePoints
-        }
-      }));
+        break;
     }
   }
 
@@ -356,7 +432,20 @@ export class AdImaPlayer extends DelegatedEventTarget {
     );
 
     Object.keys(AdEvent.Type).forEach((imaEventName) => {
-      adsManager.addEventListener(AdEvent.Type[imaEventName], (event) => this._handleAdsManagerEvents(event));
+      adsManager.addEventListener(AdEvent.Type[imaEventName], (event) => {
+        this._handleAdsManagerEvents(
+          event
+        );
+        if (AdImaPlayerEvent[imaEventName]) {
+          this.dispatchEvent(new CustomEvent(AdImaPlayerEvent[imaEventName], {
+            detail: {
+              imaAd: this.#currentAd || event.getAd(),
+              adData: event.getAdData(),
+              cuePoints: this.#cuePoints
+            }
+          }));
+        }
+      });
     });
     adsManager.addEventListener(AD_ERROR, (event) => this._onAdError(event));
 
@@ -382,7 +471,9 @@ export class AdImaPlayer extends DelegatedEventTarget {
     setTimeout(() => {
       this.#mediaImpressionTriggered = false;
       this.#mediaStartTriggered = false;
-      this.dispatchEvent(new CustomEvent('MediaStop'));
+      this.dispatchEvent(
+        new CustomEvent(AdImaPlayerEvent.MEDIA_STOP)
+      );
     }, 1);
   }
 

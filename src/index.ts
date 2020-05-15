@@ -1,11 +1,13 @@
 import {
   AdImaPlayer,
   AdImaPlayerOptions,
-  AdImaPlayerError
+  AdImaPlayerError,
+  AdImaPlayerEvent
 } from './ad-ima-player';
 
 export {
   AdImaPlayer,
   AdImaPlayerOptions,
-  AdImaPlayerError
+  AdImaPlayerError,
+  AdImaPlayerEvent
 }
