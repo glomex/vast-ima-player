@@ -38,8 +38,8 @@ Because of the above reasons this library only focuses on managing the video-mon
     <title>My VAST-IMA-Player</title>
   </head>
   <body>
-    <div id="videoContainer">
-      <video id="mediaElement" controls playsinline poster="https://peach.blender.org/wp-content/uploads/bbb-splash.png" preload="none">
+    <div id="videoContainer" style="max-width:600px; position:relative;">
+      <video style="width:100%; height:100%;" id="mediaElement" controls playsinline poster="https://peach.blender.org/wp-content/uploads/bbb-splash.png" preload="none">
         <source type="video/mp4" src="http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4">
       </video>
       <!-- the ad-container needs to be placed above the video container -->
@@ -49,7 +49,7 @@ Because of the above reasons this library only focuses on managing the video-mon
     <script>
       var adsRenderingSettings = new google.ima.AdsRenderingSettings();
       var playerOptions = new vastImaPlayer.PlayerOptions();
-      var imaPlayer = new vastImaPlayer.AdImaPlayer(
+      var imaPlayer = new vastImaPlayer.Player(
         google.ima,
         document.getElementById('mediaElement'),
         document.getElementById('adContainer'),
