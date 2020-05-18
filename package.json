@@ -1,11 +1,11 @@
 {
-  "name": "ad-player",
+  "name": "vast-ima-player",
   "version": "0.1.0",
   "description": "Convenience wrapper for advertising video/audio content with Google IMA",
   "source": "src/index.ts",
-  "main": "dist/ad-player.js",
-  "module": "dist/ad-player.module.js",
-  "unpkg": "dist/ad-player.umd.js",
+  "main": "dist/vast-ima-player.js",
+  "module": "dist/vast-ima-player.module.js",
+  "unpkg": "dist/vast-ima-player.umd.js",
   "types": "dist/index.d.ts",
   "mangle": {
     "regex": "^_"
@@ -17,6 +17,10 @@
     "start:serve": "serve",
     "start:bundle": "microbundle watch",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "github:glomex/vast-ima-player",
+  "bugs": {
+    "url" : "https://github.com/glomex/vast-ima-player/issues"
   },
   "author": "glomex GmbH",
   "license": "Apache-2.0",

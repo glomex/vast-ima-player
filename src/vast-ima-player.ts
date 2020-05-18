@@ -91,7 +91,7 @@ enum ImaOverridenAdEventTypes {
   VOLUME_MUTED = 'AdMuted'
 }
 
-type AdImaPlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
+type PlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
 
 /**
  * Available events of the ad-ima-player.
@@ -101,12 +101,12 @@ type AdImaPlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
  * is configured and the same media element is used on iOS to render both ad and content.
  * Those event names are not enumerated here because they are known.
  */
-export const AdImaPlayerEvent = {
+export const PlayerEvent = {
   ...ImaOverridenAdEventTypes,
   ...AdditionalMediaEvent,
 };
 
-export class AdImaPlayerError extends Error {
+export class PlayerError extends Error {
   errorCode: number;
   innerError: Error;
   type: string;
@@ -117,7 +117,7 @@ export class AdImaPlayerError extends Error {
   }
 }
 
-export class AdImaPlayerOptions {
+export class PlayerOptions {
   /** Sets whether to disable custom playback on iOS 10+ browsers. If true, ads will play inline if the content video is inline. This enables TrueView skippable ads. However, the ad will stay inline and not support iOS's native fullscreen. */
   disableCustomPlaybackForIOS10Plus: boolean = false;
   /** Enables or disables auto resizing of adsManager. If enabled it also resizes non-linear ads. */
@@ -126,7 +126,7 @@ export class AdImaPlayerOptions {
   clickTrackingElement?: HTMLElement
 }
 
-export class AdImaPlayer extends DelegatedEventTarget {
+export class Player extends DelegatedEventTarget {
   #mediaElement: HTMLVideoElement;
   #adElement: HTMLElement;
   #adElementChild: HTMLElement;
@@ -138,7 +138,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
   #width: number;
   #height: number;
   #adsLoader: google.ima.AdsLoader;
-  #adImaPlayerOptions: AdImaPlayerOptions;
+  #playerOptions: PlayerOptions;
   #resizeObserver: any;
   #currentAd: google.ima.Ad;
   #mediaStartTriggered: boolean = false;
@@ -153,13 +153,13 @@ export class AdImaPlayer extends DelegatedEventTarget {
     adElement: HTMLElement,
     adsRenderingSettings: google.ima.AdsRenderingSettings =
       new ima.AdsRenderingSettings(),
-    options: AdImaPlayerOptions = new AdImaPlayerOptions()
+    options: PlayerOptions = new PlayerOptions()
   ) {
     super();
     this.#mediaElement = mediaElement;
     this.#adElement = adElement;
     this.#ima = ima;
-    this.#adImaPlayerOptions = options;
+    this.#playerOptions = options;
     this.#adsRenderingSettings = adsRenderingSettings;
     // for iOS to reset to initial content state
     this.#adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
@@ -378,7 +378,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
       }
       if (!this.#mediaImpressionTriggered) {
         this.dispatchEvent(
-          new CustomEvent(AdImaPlayerEvent.MEDIA_IMPRESSION)
+          new CustomEvent(PlayerEvent.MEDIA_IMPRESSION)
         );
         this.#mediaImpressionTriggered = true;
       }
@@ -387,7 +387,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
       && !this.#mediaStartTriggered
     ) {
       this.dispatchEvent(
-        new CustomEvent(AdImaPlayerEvent.MEDIA_START)
+        new CustomEvent(PlayerEvent.MEDIA_START)
       );
       this.#mediaStartTriggered = true;
     }
@@ -399,7 +399,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
     }
     // @ts-ignore
     if (!window.ResizeObserver
-      && this.#adImaPlayerOptions.autoResize
+      && this.#playerOptions.autoResize
       && event.type === 'loadedmetadata'
     ) {
       // in case ResizeObserver is not supported we want
@@ -509,8 +509,8 @@ export class AdImaPlayer extends DelegatedEventTarget {
         this._handleAdsManagerEvents(
           event
         );
-        if (AdImaPlayerEvent[imaEventName]) {
-          this.dispatchEvent(new CustomEvent(AdImaPlayerEvent[imaEventName], {
+        if (PlayerEvent[imaEventName]) {
+          this.dispatchEvent(new CustomEvent(PlayerEvent[imaEventName], {
             detail: {
               ad: this.#currentAd || event.getAd()
             }
@@ -535,7 +535,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
       this.#mediaImpressionTriggered = false;
       this.#mediaStartTriggered = false;
       this.dispatchEvent(
-        new CustomEvent(AdImaPlayerEvent.MEDIA_STOP)
+        new CustomEvent(PlayerEvent.MEDIA_STOP)
       );
     }, 1);
   }
@@ -554,7 +554,7 @@ export class AdImaPlayer extends DelegatedEventTarget {
   }
 
   private _resizeAdsManager() {
-    if (!this.#adImaPlayerOptions.autoResize || !this.#adsManager) return;
+    if (!this.#playerOptions.autoResize || !this.#adsManager) return;
 
     const ad = this.#currentAd;
     const viewMode = this._getViewMode();
@@ -600,12 +600,12 @@ export class AdImaPlayer extends DelegatedEventTarget {
 
   private _onAdError(event: google.ima.AdErrorEvent) {
     const thrownError = event.getError();
-    const error = new AdImaPlayerError(thrownError.getMessage());
+    const error = new PlayerError(thrownError.getMessage());
     error.type = thrownError.getType();
     error.errorCode = thrownError.getErrorCode();
     error.vastErrorCode = thrownError.getVastErrorCode();
     error.innerError = thrownError.getInnerError();
-    this.dispatchEvent(new CustomEvent(AdImaPlayerEvent.AD_ERROR, {
+    this.dispatchEvent(new CustomEvent(PlayerEvent.AD_ERROR, {
       detail: { error }
     }));
     this._resetAd();

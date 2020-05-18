@@ -1,13 +1,13 @@
 import {
-  AdImaPlayer,
-  AdImaPlayerOptions,
-  AdImaPlayerError,
-  AdImaPlayerEvent
-} from './ad-ima-player';
+  Player,
+  PlayerOptions,
+  PlayerError,
+  PlayerEvent
+} from './vast-ima-player';
 
 export {
-  AdImaPlayer,
-  AdImaPlayerOptions,
-  AdImaPlayerError,
-  AdImaPlayerEvent
+  Player,
+  PlayerOptions,
+  PlayerError,
+  PlayerEvent
 }
