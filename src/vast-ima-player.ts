@@ -355,7 +355,7 @@ export class Player extends DelegatedEventTarget {
     this.#mediaStartTriggered = false;
   }
 
-  _resetAd() {
+  private _resetAd() {
     this.#currentAd = undefined;
     this.#adCurrentTime = undefined;
     this.#adDuration = undefined;
