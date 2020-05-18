@@ -1,4 +1,4 @@
-# VAST-IMA-Player
+## Summary
 
 **VAST-IMA-Player** is a convenience layer around [Google Interactive Media Ads HTML5 SDK](https://developers.google.com/interactive-media-ads/docs/sdks/html5) (short: IMA) which tries to make using IMA less cumbersome for common monetization usecases.
 
@@ -10,9 +10,9 @@ IMA [supports a wide range of IAB standards, like VAST, VMAP and VPAID](https://
 
 When you want to use IMA you either take an existing video-player with an IMA ad integration or you integrate IMA on your own. In the first case you can run into the issue that you don't need all the features that the full fledged video-player provides or that you want to adjust the IMA integration of the video-player, but it is not possible to do so. Integrating IMA on your own can be quite painful and laborious, especially when you want to synchronize the various [Lifecycle states](https://developers.google.com/interactive-media-ads/docs/sdks/html5/architecture#lifecycle).
 
-## Result
+## Features
 
-Because of the above reasons this library only focuses on managing the video-monetization lifecycle and aligning/merging events without hiding too many details of the underlying IMA library:
+Because of the above reasons this library only focuses on managing the video-monetization lifecycle and aligning & merging events without hiding too many details of the underlying IMA library:
 
 * Only relies on HTMLMediaElement and can be used in combination with e.g. [HLS.js](https://github.com/video-dev/hls.js/) or [Shaka Player](https://github.com/google/shaka-player).
 * Does not provide any additional video-player UI. The consumer should be able to decide whether to use the native controls or to design his own.
@@ -64,4 +64,22 @@ Because of the above reasons this library only focuses on managing the video-mon
     </script>
   </body>
 </html>
+~~~
+
+## API
+
+This library can also be imported into your code via NPM (`npm install @glomex/vast-ima-player`) and be used like this:
+
+~~~js
+import { Player, PlayerOptions } from '@glomex/vast-ima-player';
+
+const adsRenderingSettings = new google.ima.AdsRenderingSettings();
+const playerOptions = new PlayerOptions();
+const imaPlayer = new Player(
+  google.ima,
+  yourMediaElement,
+  yourAdContainer,
+  adsRenderingSettings,
+  playerOptions
+);
 ~~~
