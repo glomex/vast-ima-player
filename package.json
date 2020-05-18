@@ -1,5 +1,5 @@
 {
-  "name": "vast-ima-player",
+  "name": "@glomex/vast-ima-player",
   "version": "1.0.0",
   "description": "Convenience wrapper for advertising video/audio content with Google IMA",
   "source": "src/index.ts",
