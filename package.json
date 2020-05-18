@@ -18,6 +18,10 @@
     "start:bundle": "microbundle watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "repository": "github:glomex/vast-ima-player",
   "bugs": {
     "url" : "https://github.com/glomex/vast-ima-player/issues"

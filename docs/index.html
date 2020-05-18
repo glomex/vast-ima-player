@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
+    />
+    <title>VAST-IMA-Player Documentation</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@egoist/docup@1/dist/docup.min.css"
+    />
+    <style>
+      :root {
+        --navbar-bg: #14233c; /*linear-gradient(to right, #87e0fd 0%,#327dc8 0%,#c800ff 100%);*/
+        --sidebar-bg: #252c31;
+        --sidebar-text-fg: #ccc;
+        --sidebar-menu-item-active-fg: #777;
+        --content-link-fg: #1C90F3;
+      }
+      .navbar h1::before {
+        content: '';
+        background-image: url('./glomex-logo.png');
+        background-repeat: no-repeat;
+        background-position: center 2px;
+        background-size: 70% 70%;
+        width: 30px;
+        height: 30px;
+        margin-right: 5px;
+        vertical-align: middle;
+        display: inline-block;
+      }
+      .navbar::after {
+        content: '';
+        display: block;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 4px;
+        width: 100%;
+        margin-top: 4px;
+        background: linear-gradient(to right, #c800ff, #2dafe5);
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://unpkg.com/@egoist/docup@1/dist/docup.min.js"></script>
+    <script>
+      docup.init({
+        title: 'VAST-IMA-Player'
+      })
+    </script>
+  </body>
+</html>
