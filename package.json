@@ -7,6 +7,9 @@
   "module": "dist/ad-player.module.js",
   "unpkg": "dist/ad-player.umd.js",
   "types": "dist/index.d.ts",
+  "mangle": {
+    "regex": "^_"
+  },
   "scripts": {
     "prepare": "npm run -s build",
     "build": "microbundle",
