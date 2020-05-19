@@ -16,7 +16,7 @@ When you want to use IMA you either take an existing video-player with an IMA ad
 
 ## Features
 
-Because of the above reasons this library only focuses on managing the media monetization lifecycle and aligning & merging events without hiding too many details of the underlying IMA library:
+This library focuses on managing the actual media monetization lifecycle and on aligning events without hiding too many details of the underlying IMA library:
 
 * Only relies on HTMLMediaElement and can be used in combination with e.g. [HLS.js](https://github.com/video-dev/hls.js/) or [Shaka Player](https://github.com/google/shaka-player).
 * Does not provide any additional video-player UI. The consumer should be able to decide whether to use the native controls or to design their own.
