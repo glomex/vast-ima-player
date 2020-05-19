@@ -22,6 +22,17 @@
     "dist",
     "src"
   ],
+  "keywords": [
+    "ima",
+    "ima-sdk",
+    "ad",
+    "googleads",
+    "vast",
+    "vpaid",
+    "vmap",
+    "player",
+    "video-player"
+  ],
   "repository": "github:glomex/vast-ima-player",
   "bugs": {
     "url": "https://github.com/glomex/vast-ima-player/issues"
