@@ -138,7 +138,7 @@ These IMA documentation pages will probably be relevant when using VAST-IMA-Play
 * [google.ima.AdsRequest](https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdsRequest), which is passed into `playAds` method
 * [google.ima.Ad](https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.Ad), exposed via ad events as `event.detail.ad`
 
-### Typings
+### Types
 
 For the full documented API you can open the [type declaration file of VAST-IMA-Player](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.d.ts).
 
