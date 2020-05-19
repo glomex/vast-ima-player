@@ -31,9 +31,8 @@ enum AdditionalMediaEvent {
  * Adjusted enum of https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdEvent
  * to follow VPAID spec event names.
  */
-enum ImaOverridenAdEventTypes {
+enum ImaToAdEventMap {
   // most relevant Ad events
-
   /**
    * Fired when an ad error occurred (standalone ad or ad within an ad rule).
    * IMA provides these events on different objects and this event normalizes it.
@@ -73,7 +72,6 @@ enum ImaOverridenAdEventTypes {
   VOLUME_MUTED = 'AdMuted',
 
   // Ad lifecycle events
-
   /** Fired when an ads list is loaded. This is when ad rule cuePoints are available. */
   AD_METADATA = 'AdMetadata',
   /** Fired when an ad rule or a VMAP ad break would have played if autoPlayAdBreaks is false. */
@@ -86,7 +84,6 @@ enum ImaOverridenAdEventTypes {
   ALL_ADS_COMPLETED = 'AdAllAdsCompleted',
 
   // VPAID events
-
   /** Fired when the ad's duration changes. */
   DURATION_CHANGE = 'AdDurationChange',
   /** Fired when an ad triggers the interaction callback. Ad interactions contain an interaction ID string in the ad data. */
@@ -99,7 +96,6 @@ enum ImaOverridenAdEventTypes {
   USER_CLOSE = 'AdUserClose',
 
   // Undocumented events
-
   /** Not document by IMA */
   AD_CAN_PLAY = 'AdCanPlay',
   /** Not document by IMA */
@@ -108,7 +104,7 @@ enum ImaOverridenAdEventTypes {
   VIEWABLE_IMPRESSION = 'AdViewableImpression'
 }
 
-type PlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
+type PlayerEvent = AdditionalMediaEvent | ImaToAdEventMap;
 
 /**
  * Available events of the VAST-IMA-Player.
@@ -123,7 +119,7 @@ type PlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
  * Those event names are not enumerated here because they are known.
  */
 export const PlayerEvent = {
-  ...ImaOverridenAdEventTypes,
+  ...ImaToAdEventMap,
   ...AdditionalMediaEvent,
 };
 
@@ -147,6 +143,9 @@ export class PlayerOptions {
   clickTrackingElement?: HTMLElement
 }
 
+/**
+ * Convenience player wrapper for the Google IMA HTML5 SDK
+ */
 export class Player extends DelegatedEventTarget {
   #mediaElement: HTMLVideoElement;
   #adElement: HTMLElement;
@@ -245,6 +244,11 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  /**
+   * This allows synchronous activation of the media element
+   * and the Google IMA ad-display-container. Useful when you
+   * have to do async work before calling "playAds".
+   */
   activate() {
     // activate assigned mediaElement for future 'play' calls
     if (!this.#mediaElement.dataset.activated) {
@@ -260,6 +264,14 @@ export class Player extends DelegatedEventTarget {
     this.#adDisplayContainer.initialize();
   }
 
+  /**
+   * This is the entry point to start ad playback. It can be used
+   * as such:
+   *
+   * - With a single VAST at the beginning to play a preroll
+   * - Anyhwere during content playback with a single VAST
+   * - With a single VMAP at the beginning
+   */
   playAds(adsRequest: google.ima.AdsRequest) {
     const { muted } = this.#mediaElement;
     this.reset();
@@ -274,47 +286,84 @@ export class Player extends DelegatedEventTarget {
     this.#adsLoader.requestAds(adsRequest);
   }
 
+  /**
+   * Starts playback of either content or ad element.
+   */
   play() {
-    if (this.#currentAd && this.#currentAd.isLinear()) {
-      this.#adsManager.resume();
-    } else {
+    if (this.#customPlayhead.enabled) {
       this.#mediaElement.play();
+    } else {
+      this.#adsManager.resume();
     }
   }
 
+  /**
+   * Pauses playback of either content or ad element.
+   */
   pause() {
-    if (this.#currentAd && this.#currentAd.isLinear()) {
-      this.#adsManager.pause();
-    } else {
+    if (this.#customPlayhead.enabled) {
       this.#mediaElement.pause();
-    }
-  }
-
-  set volume(volume: number) {
-    if (this.#currentAd && this.#currentAd.isLinear()) {
-      this.#adsManager.setVolume(volume);
     } else {
-      this.#mediaElement.volume = volume;
+      this.#adsManager.pause();
     }
   }
 
+  /**
+   * Sets volume of either content or ad element.
+   */
+  set volume(volume: number) {
+    if (this.#customPlayhead.enabled) {
+      this.#mediaElement.volume = volume;
+    } else {
+      this.#adsManager.setVolume(volume);
+    }
+  }
+
+  /**
+   * Returns volume of either content or ad element.
+   */
   get volume() {
-    if (this.#currentAd && this.#currentAd.isLinear()) {
+    if (!this.#customPlayhead.enabled) {
       return this.#adsManager.getVolume();
     }
     return this.#mediaElement.volume;
   }
 
+  /**
+   * Sets muted state on either content or ad element.
+   */
   set muted(muted: boolean) {
-    if (this.#currentAd && this.#currentAd.isLinear()) {
+    if (this.#customPlayhead.enabled) {
+      this.#mediaElement.muted = muted;
+    } else {
       // ignoring the fact that there is a separate
       // muted flag on the media element
       this.#adsManager.setVolume(muted ? 0 : 1);
-    } else {
-      this.#mediaElement.muted = muted;
     }
   }
 
+  /**
+   * Returns muted state of either content or ad element.
+   */
+  get muted() {
+    if (!this.#customPlayhead.enabled) {
+      return this.#adsManager.getVolume() === 0;
+    }
+    return this.#mediaElement.muted;
+  }
+
+  /**
+   * Sets current time of content element when not in ad playback mode.
+   */
+  set currentTime(currentTime: number) {
+    if (this.#customPlayhead.enabled) {
+      this.#mediaElement.currentTime = currentTime;
+    }
+  }
+
+  /**
+   * Returns current playhead time of either content or ad element.
+   */
   get currentTime() {
     if (this.#adCurrentTime) {
       return this.#adCurrentTime;
@@ -322,6 +371,9 @@ export class Player extends DelegatedEventTarget {
     return this.#mediaElement.currentTime;
   }
 
+  /**
+   * Returns current duration of either content or ad element.
+   */
   get duration() {
     if (this.#adDuration) {
       return this.#adDuration;
@@ -329,6 +381,17 @@ export class Player extends DelegatedEventTarget {
     return this.#mediaElement.duration;
   }
 
+  /**
+   * Returns list of ad break cue points.
+   * Only available after "AdMetadata" event when VMAP is passed in playAds.
+   */
+  get cuePoints() {
+    return this.#cuePoints;
+  }
+
+  /**
+   * Allows resizing the ad element. Useful when options.autoResize = false.
+   */
   resize(width: number, height: number) {
     this.#width = width;
     this.#height = height;
@@ -337,17 +400,9 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
-  get muted() {
-    if (this.#currentAd && this.#currentAd.isLinear()) {
-      return this.#adsManager.getVolume() === 0;
-    }
-    return this.#mediaElement.muted;
-  }
-
-  get cuePoints() {
-    return this.#cuePoints;
-  }
-
+  /**
+   * Cleans up current ad and ad manager session.
+   */
   reset() {
     this._resetAd();
     this.#cuePoints = [];
@@ -359,6 +414,9 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  /**
+   * Completely destroys this instance. It is unusable after that.
+   */
   destroy() {
     this.reset();
     if (this.#customPlayhead) {

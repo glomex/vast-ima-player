@@ -12,14 +12,16 @@ When you want to use IMA you either take an existing video-player with an IMA ad
 
 ## Features
 
-Because of the above reasons this library only focuses on managing the video-monetization lifecycle and aligning & merging events without hiding too many details of the underlying IMA library:
+Because of the above reasons this library only focuses on managing the media monetization lifecycle and aligning & merging events without hiding too many details of the underlying IMA library:
 
 * Only relies on HTMLMediaElement and can be used in combination with e.g. [HLS.js](https://github.com/video-dev/hls.js/) or [Shaka Player](https://github.com/google/shaka-player).
 * Does not provide any additional video-player UI. The consumer should be able to decide whether to use the native controls or to design their own.
 * Provides additional events to manage the video-monetization lifecycle: `MediaStart`, `MediaImpression` and `MediaStop`.
-* Proxies media element events (`timeupdate`, `play`, `pause`, ...) and properties (`currentTime`, `volume`, ...) through the VAST-IMA-Player API so that the consumer does not have to implement ad & content switching in their code. On iPhone the IMA defaults to use a single video tag to play back ad and content and VAST-IMA-Player ensures that the consumer receives the appropriate ad or content data.
+* Proxies HTMLMediaElement events (`timeupdate`, `play`, `pause`, ...) and properties (`currentTime`, `volume`, ...) through the VAST-IMA-Player API so that the consumer does not have to implement ad & content switching in their code. On iPhone the IMA defaults to use a single video tag to play back ad and content and VAST-IMA-Player ensures that the consumer receives the appropriate ad or content data.
+* Proxies the properties `volume`, `muted`, `currentTime` and `duration` and provides proxy methods for `play()` and `pause()`.
 * Prefixes all IMA events with `Ad` so that they are more aligned with the [VPAID 2.0 standard](https://www.iab.com/wp-content/uploads/2015/06/VPAID_2_0_Final_04-10-2012.pdf).
 * It auto-resizes the IMA ad container (but also allows manual control).
+* Synchronizes volume & muted state when switching between ad and content
 
 ## Quick Start
 
@@ -66,7 +68,7 @@ Because of the above reasons this library only focuses on managing the video-mon
 
 ## API
 
-This library can also be imported into your project via NPM (`npm install @glomex/vast-ima-player`) and be used like this:
+This library can also be imported into your project via NPM or Yarn (`npm install @glomex/vast-ima-player`) and be used like this:
 
 ~~~js
 import { Player, PlayerOptions, loadImaSdk } from '@glomex/vast-ima-player';
@@ -74,10 +76,48 @@ import { Player, PlayerOptions, loadImaSdk } from '@glomex/vast-ima-player';
 // in case Google IMA was not loaded before
 // you can load it with this helper
 loadImaSdk().then((ima) => {
+  // see https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdsRenderingSettings
+  // for available options
   const adsRenderingSettings = new google.ima.AdsRenderingSettings();
   const playerOptions = new PlayerOptions();
   const imaPlayer = new Player(
-    ima, aMediaElement, anAdDomElement, adsRenderingSettings
+    ima, aMediaElement, anAdDomElement,
+    adsRenderingSettings, playerOptions
   );
+  // simply connect to ad events
+  imaPlayer.addEventListener('AdStarted', (event) => {
+    // event.detail.ad contains an instance of
+    // https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.Ad
+    console.log('ad started', event.detail.ad);
+  });
+  imaPlayer.addEventListener('AdProgress', (event) => {
+    console.log(
+      'ad timeupdate',
+      imaPlayer.duration,
+      imaPlayer.currentTime
+    );
+  });
+  // or connect to content events
+  imaPlayer.addEventListener('timeupdate', (event) => {
+    console.log(
+      'content timeupdate',
+      imaPlayer.duration,
+      imaPlayer.currentTime
+    );
+  });
+  // muted the media element (this will be auto-synchronized)
+  aMediaElement.muted = true;
+  const playAdsRequest = new google.ima.AdsRequest();
+  playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad.xml';
+  // will start the ad muted
+  imaPlayer.playAds(playAdsRequest);
 });
 ~~~
+
+### Typings
+
+For the full documented API you can open the [type declaration file of VAST-IMA-Player](https://unpkg.com/@glomex/vast-ima-player@1.0.0/dist/vast-ima-player.d.ts).
+
+## License
+
+[Apache 2.0 License](https://oss.ninja/apache-2.0-header/glomex)
