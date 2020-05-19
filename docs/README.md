@@ -116,7 +116,7 @@ loadImaSdk().then((ima) => {
 
 ### Typings
 
-For the full documented API you can open the [type declaration file of VAST-IMA-Player](https://unpkg.com/@glomex/vast-ima-player@1.0.0/dist/vast-ima-player.d.ts).
+For the full documented API you can open the [type declaration file of VAST-IMA-Player](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.d.ts).
 
 ## License
 
