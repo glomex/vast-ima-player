@@ -142,6 +142,10 @@ These IMA documentation pages will probably be relevant when using VAST-IMA-Play
 
 For the full documented API you can open the [type declaration file of VAST-IMA-Player](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.d.ts).
 
+## Source
+
+You can find the source on GitHub: https://github.com/glomex/vast-ima-player
+
 ## License
 
 [Apache 2.0 License](https://oss.ninja/apache-2.0-header/glomex)
