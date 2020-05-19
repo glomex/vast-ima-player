@@ -4,6 +4,10 @@
 
 This library can be used to build a simple outstream player or it can be used to implement more complex monetization scenarios. VAST-IMA-Player can monetize any content media player (with pre-, mid and postrolls), which follows the browser-built-in [HTMLMediaElement API](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement).
 
+### Browser Support
+
+**VAST-IMA-Player** works in Chrome, Firefox, Edge, iOS Safari, Android and IE11. For IE11 you have to polyfill [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) when you want to use `loadImaSdk()`. In case you want the auto-resizing to work in older browsers you would have to polyfill [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver).
+
 ## Why
 
 IMA [supports a wide range of IAB standards, like VAST, VMAP and VPAID](https://developers.google.com/interactive-media-ads/docs/sdks/html5/compatibility#video-features-and-sdk-versions) and it can also be used for video monetization in conjunction with non-Google ad servers.
