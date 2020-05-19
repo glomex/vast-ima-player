@@ -4,7 +4,7 @@
 
 This library can be used to build a simple outstream player or it can be used to implement more complex monetization scenarios. VAST-IMA-Player can monetize any content media player (with pre-, mid and postrolls), which follows the browser-built-in [HTMLMediaElement API](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement).
 
-## Why?
+## Why
 
 IMA [supports a wide range of IAB standards, like VAST, VMAP and VPAID](https://developers.google.com/interactive-media-ads/docs/sdks/html5/compatibility#video-features-and-sdk-versions) and it can also be used for video monetization in conjunction with non-Google ad servers.
 
@@ -42,7 +42,7 @@ Because of the above reasons this library only focuses on managing the media mon
   <body>
     <div id="videoContainer" style="max-width:600px; position:relative;">
       <video style="width:100%; height:100%;" id="mediaElement" controls playsinline poster="https://peach.blender.org/wp-content/uploads/bbb-splash.png" preload="none">
-        <source type="video/mp4" src="http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4">
+        <source type="video/mp4" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
       </video>
       <!-- the ad-container needs to be placed above the video container -->
       <div id="adContainer" style="position:absolute; left:0; top:0;"></div>
@@ -66,9 +66,16 @@ Because of the above reasons this library only focuses on managing the media mon
 </html>
 ~~~
 
+### Example
+
+<iframe height="570" style="width: 100%;" scrolling="no" title="VAST-IMA-Player Playground" src="https://codepen.io/klipstein/embed/GRpwLXr?height=570&theme-id=light&default-tab=result" frameborder="no" allowtransparency="true" allowfullscreen="true">
+  See the Pen <a href='https://codepen.io/klipstein/pen/GRpwLXr'>VAST-IMA-Player Playground</a> by Tobias von Klipstein
+  (<a href='https://codepen.io/klipstein'>@klipstein</a>) on <a href='https://codepen.io'>CodePen</a>.
+</iframe>
+
 ## API
 
-This library can also be imported into your project via NPM or Yarn (`npm install @glomex/vast-ima-player`) and be used like this:
+This library can also be imported into your project via NPM or Yarn (`npm install @glomex/vast-ima-player`) and be used like the following:
 
 ~~~js
 import { Player, PlayerOptions, loadImaSdk } from '@glomex/vast-ima-player';
@@ -76,18 +83,22 @@ import { Player, PlayerOptions, loadImaSdk } from '@glomex/vast-ima-player';
 // in case Google IMA was not loaded before
 // you can load it with this helper
 loadImaSdk().then((ima) => {
-  // see https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdsRenderingSettings
-  // for available options
+  // see google.ima.AdsRenderingSettings for available options
+  // links within "IMA Resources" section
   const adsRenderingSettings = new google.ima.AdsRenderingSettings();
   const playerOptions = new PlayerOptions();
   const imaPlayer = new Player(
     ima, aMediaElement, anAdDomElement,
     adsRenderingSettings, playerOptions
   );
+  // global IMA settings can be adjusted like that
+  google.ima.settings.setVpaidMode(
+    google.ima.ImaSdkSettings.VpaidMode.INSECURE
+  );
+  google.ima.settings.setNumRedirects(3);
   // simply connect to ad events
   imaPlayer.addEventListener('AdStarted', (event) => {
-    // event.detail.ad contains an instance of
-    // https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.Ad
+    // event.detail.ad contains an instance of google.ima.Ad
     console.log('ad started', event.detail.ad);
   });
   imaPlayer.addEventListener('AdProgress', (event) => {
@@ -105,7 +116,7 @@ loadImaSdk().then((ima) => {
       imaPlayer.currentTime
     );
   });
-  // muted the media element (this will be auto-synchronized)
+  // mute the media element (this will be synchronized automatically)
   aMediaElement.muted = true;
   const playAdsRequest = new google.ima.AdsRequest();
   playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad.xml';
@@ -113,6 +124,15 @@ loadImaSdk().then((ima) => {
   imaPlayer.playAds(playAdsRequest);
 });
 ~~~
+
+### IMA Resources
+
+These IMA documentation pages will probably be relevant when using VAST-IMA-Player because those APIs stayed the same:
+
+* [google.ima.AdsRenderingSettings](https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdsRenderingSettings), which are passed into the constructor
+* [google.ima.ImaSdkSettings](https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.ImaSdkSettings), which can be applied globally
+* [google.ima.AdsRequest](https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdsRequest), which is passed into `playAds` method
+* [google.ima.Ad](https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.Ad), exposed via ad events as `event.detail.ad`
 
 ### Typings
 
