@@ -15,9 +15,9 @@ When you want to use IMA you either take an existing video-player with an IMA ad
 Because of the above reasons this library only focuses on managing the video-monetization lifecycle and aligning & merging events without hiding too many details of the underlying IMA library:
 
 * Only relies on HTMLMediaElement and can be used in combination with e.g. [HLS.js](https://github.com/video-dev/hls.js/) or [Shaka Player](https://github.com/google/shaka-player).
-* Does not provide any additional video-player UI. The consumer should be able to decide whether to use the native controls or to design his own.
+* Does not provide any additional video-player UI. The consumer should be able to decide whether to use the native controls or to design their own.
 * Provides additional events to manage the video-monetization lifecycle: `MediaStart`, `MediaImpression` and `MediaStop`.
-* Proxies media element events (`timeupdate`, `play`, `pause`, ...) and properties (`currentTime`, `volume`, ...) through the VAST-IMA-Player API so that the consumer does not have to implement ad & content switching in his/her code. On iPhone the IMA defaults to use a single video tag to play back ad and content and VAST-IMA-Player ensures that the consumer receives the appropriate ad or content data.
+* Proxies media element events (`timeupdate`, `play`, `pause`, ...) and properties (`currentTime`, `volume`, ...) through the VAST-IMA-Player API so that the consumer does not have to implement ad & content switching in their code. On iPhone the IMA defaults to use a single video tag to play back ad and content and VAST-IMA-Player ensures that the consumer receives the appropriate ad or content data.
 * Prefixes all IMA events with `Ad` so that they are more aligned with the [VPAID 2.0 standard](https://www.iab.com/wp-content/uploads/2015/06/VPAID_2_0_Final_04-10-2012.pdf).
 * It auto-resizes the IMA ad container (but also allows manual control).
 
@@ -48,13 +48,11 @@ Because of the above reasons this library only focuses on managing the video-mon
     <button id="playAd">Play Ad</button>
     <script>
       var adsRenderingSettings = new google.ima.AdsRenderingSettings();
-      var playerOptions = new vastImaPlayer.PlayerOptions();
       var imaPlayer = new vastImaPlayer.Player(
         google.ima,
         document.getElementById('mediaElement'),
         document.getElementById('adContainer'),
-        adsRenderingSettings,
-        playerOptions
+        adsRenderingSettings
       );
       document.getElementById('playAd').addEventListener('click', function() {
         var playAdsRequest = new google.ima.AdsRequest();
@@ -68,18 +66,18 @@ Because of the above reasons this library only focuses on managing the video-mon
 
 ## API
 
-This library can also be imported into your code via NPM (`npm install @glomex/vast-ima-player`) and be used like this:
+This library can also be imported into your project via NPM (`npm install @glomex/vast-ima-player`) and be used like this:
 
 ~~~js
-import { Player, PlayerOptions } from '@glomex/vast-ima-player';
+import { Player, PlayerOptions, loadImaSdk } from '@glomex/vast-ima-player';
 
-const adsRenderingSettings = new google.ima.AdsRenderingSettings();
-const playerOptions = new PlayerOptions();
-const imaPlayer = new Player(
-  google.ima,
-  yourMediaElement,
-  yourAdContainer,
-  adsRenderingSettings,
-  playerOptions
-);
+// in case Google IMA was not loaded before
+// you can load it with this helper
+loadImaSdk().then((ima) => {
+  const adsRenderingSettings = new google.ima.AdsRenderingSettings();
+  const playerOptions = new PlayerOptions();
+  const imaPlayer = new Player(
+    ima, aMediaElement, anAdDomElement, adsRenderingSettings
+  );
+});
 ~~~

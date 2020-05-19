@@ -1,3 +1,4 @@
+import { loadImaSdk } from '@alugha/ima';
 import {
   Player,
   PlayerOptions,
@@ -9,5 +10,6 @@ export {
   Player,
   PlayerOptions,
   PlayerError,
-  PlayerEvent
+  PlayerEvent,
+  loadImaSdk
 }

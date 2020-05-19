@@ -32,73 +32,94 @@ enum AdditionalMediaEvent {
  * to follow VPAID spec event names.
  */
 enum ImaOverridenAdEventTypes {
-  /** Fired when an ad error occurred (standalone ad or ad within an ad rule). */
+  // most relevant Ad events
+
+  /**
+   * Fired when an ad error occurred (standalone ad or ad within an ad rule).
+   * IMA provides these events on different objects and this event normalizes it.
+   * */
   AD_ERROR = 'AdError',
-  /** Fired when an ad rule or a VMAP ad break would have played if autoPlayAdBreaks is false. */
-  AD_BREAK_READY = 'AdBreakReady',
   /** Fired when the ad has stalled playback to buffer. */
   AD_BUFFERING = 'AdBuffering',
-  AD_CAN_PLAY = 'AdCanPlay',
-  /** Fired when an ads list is loaded. */
-  AD_METADATA = 'AdMetadata',
-  /** Fired when the ad's current time value changes. */
-  AD_PROGRESS = 'AdProgress',
-  /** Fired when the ads manager is done playing all the ads. */
-  ALL_ADS_COMPLETED = 'AdAllAdsCompleted',
-  /** Fired when the ad is clicked. */
-  CLICK = 'AdClick',
-  /** Fired when the ad completes playing. */
-  COMPLETE = 'AdComplete',
-  /** Fired when content should be paused. This usually happens right before an ad is about to cover the content. */
-  CONTENT_PAUSE_REQUESTED = 'AdContentPauseRequested',
-  /** Fired when content should be resumed. This usually happens when an ad finishes or collapses. */
-  CONTENT_RESUME_REQUESTED = 'AdContentResumeRequested',
-  /** Fired when the ad's duration changes. */
-  DURATION_CHANGE = 'AdDurationChange',
-  EXPANDED_CHANGED = 'AdExpandedChanged',
-  /** Fired when the ad playhead crosses first quartile. */
-  FIRST_QUARTILE = 'AdFirstQuartile',
-  /** Fired when the impression URL has been pinged. */
-  IMPRESSION = 'AdImpression',
-  /** Fired when an ad triggers the interaction callback. Ad interactions contain an interaction ID string in the ad data. */
-  INTERACTION = 'AdInteraction',
-  /** Fired when the displayed ad changes from linear to nonlinear, or vice versa. */
-  LINEAR_CHANGED = 'AdLinearChanged',
   /** Fired when ad data is available. */
   LOADED = 'AdLoaded',
-  /** Fired when a non-fatal error is encountered. The user need not take any action since the SDK will continue with the same or next ad playback depending on the error situation. */
-  LOG = 'AdLog',
+  /** Fired when the impression URL has been pinged. */
+  IMPRESSION = 'AdImpression',
+  /** Fired when the ad starts playing. */
+  STARTED = 'AdStarted',
+  /** Fired when the ad playhead crosses first quartile. */
+  FIRST_QUARTILE = 'AdFirstQuartile',
   /** Fired when the ad playhead crosses midpoint. */
   MIDPOINT = 'AdMidpoint',
+  /** Fired when the ad playhead crosses third quartile. */
+  THIRD_QUARTILE = 'AdThirdQuartile',
+  /** Fired when the ad's current time value changes. */
+  AD_PROGRESS = 'AdProgress',
+  /** Fired when the ad completes playing. */
+  COMPLETE = 'AdComplete',
+  /** Fired when the ad is clicked. */
+  CLICK = 'AdClick',
   /** Fired when the ad is paused. */
   PAUSED = 'AdPaused',
   /** Fired when the ad is resumed. */
   RESUMED = 'AdResumed',
-  /** Fired when the displayed ads skippable state is changed. */
-  SKIPPABLE_STATE_CHANGED = 'AdSkippableStateChanged',
   /** Fired when the ad is skipped by the user. */
   SKIPPED = 'AdSkipped',
-  /** Fired when the ad starts playing. */
-  STARTED = 'AdStarted',
-  /** Fired when the ad playhead crosses third quartile. */
-  THIRD_QUARTILE = 'AdThirdQuartile',
-  /** Fired when the ad is closed by the user. */
-  USER_CLOSE = 'AdUserClose',
-  VIEWABLE_IMPRESSION = 'AdViewableImpression',
+  /** Fired when the displayed ads skippable state is changed. */
+  SKIPPABLE_STATE_CHANGED = 'AdSkippableStateChanged',
   /** Fired when the ad volume has changed. */
   VOLUME_CHANGED = 'AdVolumeChanged',
   /** Fired when the ad volume has been muted. */
-  VOLUME_MUTED = 'AdMuted'
+  VOLUME_MUTED = 'AdMuted',
+
+  // Ad lifecycle events
+
+  /** Fired when an ads list is loaded. This is when ad rule cuePoints are available. */
+  AD_METADATA = 'AdMetadata',
+  /** Fired when an ad rule or a VMAP ad break would have played if autoPlayAdBreaks is false. */
+  AD_BREAK_READY = 'AdBreakReady',
+  /** Fired when content should be paused. This usually happens right before an ad is about to cover the content. */
+  CONTENT_PAUSE_REQUESTED = 'AdContentPauseRequested',
+  /** Fired when content should be resumed. This usually happens when an ad finishes or collapses. */
+  CONTENT_RESUME_REQUESTED = 'AdContentResumeRequested',
+  /** Fired when the ads manager is done playing all the ads. */
+  ALL_ADS_COMPLETED = 'AdAllAdsCompleted',
+
+  // VPAID events
+
+  /** Fired when the ad's duration changes. */
+  DURATION_CHANGE = 'AdDurationChange',
+  /** Fired when an ad triggers the interaction callback. Ad interactions contain an interaction ID string in the ad data. */
+  INTERACTION = 'AdInteraction',
+  /** Fired when the displayed ad changes from linear to nonlinear, or vice versa. */
+  LINEAR_CHANGED = 'AdLinearChanged',
+  /** Fired when a non-fatal error is encountered. The user need not take any action since the SDK will continue with the same or next ad playback depending on the error situation. */
+  LOG = 'AdLog',
+  /** Fired when the ad is closed by the user. */
+  USER_CLOSE = 'AdUserClose',
+
+  // Undocumented events
+
+  /** Not document by IMA */
+  AD_CAN_PLAY = 'AdCanPlay',
+  /** Not document by IMA */
+  EXPANDED_CHANGED = 'AdExpandedChanged',
+  /** Not document by IMA */
+  VIEWABLE_IMPRESSION = 'AdViewableImpression'
 }
 
 type PlayerEvent = AdditionalMediaEvent | ImaOverridenAdEventTypes;
 
 /**
- * Available events of the ad-ima-player.
+ * Available events of the VAST-IMA-Player.
  *
- * It also triggers the normal media element events (timeupdate, play, pause, ...)
- * when the content playback happens. This is useful when "disableCustomPlaybackForIOS10Plus"
- * is configured and the same media element is used on iOS to render both ad and content.
+ * Also see https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/reference/js/google.ima.AdEvent
+ *
+ * The player also triggers the normal media element events
+ * (https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Media_events)
+ * when the content playback happens. This is useful when
+ * "disableCustomPlaybackForIOS10Plus = false" (default) is configured and
+ * the same media element is used on iOS to render both ad and content.
  * Those event names are not enumerated here because they are known.
  */
 export const PlayerEvent = {
