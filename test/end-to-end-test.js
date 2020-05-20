@@ -75,7 +75,7 @@ const vmapWithPreMidAndPostroll = `<?xml version="1.0" encoding="UTF-8"?>
 </VMAP>`;
 
 describe("VAST-IMA-Player", () => {
-  jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
+  jasmine.DEFAULT_TIMEOUT_INTERVAL = 40000;
 
   let ima;
   let mediaElement;
@@ -122,12 +122,29 @@ describe("VAST-IMA-Player", () => {
     const collectedEvents = [];
     imaPlayer.addEventListener('MediaStart', () => collectedEvents.push('MediaStart'));
     imaPlayer.addEventListener('MediaImpression', () => {
-      collectedEvents.push('MediaImpression');
+      collectedEvents.push([
+        'MediaImpression',
+        parseInt(imaPlayer.duration, 10),
+        parseInt(imaPlayer.currentTime, 10)
+      ]);
       imaPlayer.pause();
       imaPlayer.currentTime = imaPlayer.duration;
       imaPlayer.play();
     });
-    imaPlayer.addEventListener('AdStarted', () => collectedEvents.push('AdStarted'));
+    imaPlayer.addEventListener('AdStarted', () => {
+      collectedEvents.push([
+        'AdStarted',
+        parseInt(imaPlayer.duration, 10),
+        parseInt(imaPlayer.currentTime, 10)
+      ]);
+    });
+    imaPlayer.addEventListener('AdComplete', () => {
+      collectedEvents.push([
+        'AdComplete',
+        parseInt(imaPlayer.duration, 10),
+        parseInt(imaPlayer.currentTime, 10)
+      ]);
+    });
     imaPlayer.addEventListener('AdPaused', () => collectedEvents.push('AdPaused'));
     imaPlayer.addEventListener('AdResumed', () => collectedEvents.push('AdResumed'));
     imaPlayer.addEventListener('AdProgress', () => {
@@ -138,7 +155,6 @@ describe("VAST-IMA-Player", () => {
         imaPlayer.play();
       }, 1);
     }, { once: true });
-    imaPlayer.addEventListener('AdComplete', () => collectedEvents.push('AdComplete'));
     imaPlayer.addEventListener('play', () => collectedEvents.push('play'));
     imaPlayer.addEventListener('pause', () => collectedEvents.push('pause'));
     imaPlayer.addEventListener('timeupdate', () => collectedEvents.push('timeupdate'), { once: true });
@@ -148,17 +164,18 @@ describe("VAST-IMA-Player", () => {
 
     imaPlayer.addEventListener('MediaStop', () => {
       collectedEvents.push('MediaStop');
+      imaPlayer.destroy();
       expect(collectedEvents).toEqual([
         'MediaStart',
         'play',
         'pause',
-        'AdStarted',
+        ['AdStarted', 4, 0],
         'AdProgress',
         'AdPaused',
         'AdResumed',
-        'AdComplete',
+        ['AdComplete', 4, 4],
         'play',
-        'MediaImpression',
+        ['MediaImpression', 23, 0],
         'timeupdate',
         'pause',
         'play',
@@ -166,7 +183,6 @@ describe("VAST-IMA-Player", () => {
         'ended',
         'MediaStop'
       ]);
-      imaPlayer.destroy();
       done();
     });
   });
@@ -187,7 +203,7 @@ describe("VAST-IMA-Player", () => {
       collectedEvents.push('MediaImpression');
       imaPlayer.pause();
       // jump after midroll and shortly in front of end
-      imaPlayer.currentTime = 20;
+      imaPlayer.currentTime = imaPlayer.duration - 1;
       imaPlayer.play();
     });
     imaPlayer.addEventListener('AdStarted', (event) => {
@@ -214,6 +230,7 @@ describe("VAST-IMA-Player", () => {
 
     imaPlayer.addEventListener('MediaStop', () => {
       collectedEvents.push('MediaStop');
+      imaPlayer.destroy();
       expect(collectedEvents).toEqual([
         'MediaStart',
         ['AdStarted', 2, 1, 'preroll-1', 0],
@@ -228,8 +245,28 @@ describe("VAST-IMA-Player", () => {
         ['AdComplete', 1, 1, 'postroll', -1],
         'MediaStop'
       ]);
-      imaPlayer.destroy();
       done();
     });
+  });
+
+  it("resizes container to nonlinear ad size", (done) => {
+    var adsRenderingSettings = new ima.AdsRenderingSettings();
+    var imaPlayer = new vastImaPlayer.Player(
+      google.ima,
+      mediaElement,
+      adElement,
+      adsRenderingSettings
+    );
+    var playAdsRequest = new ima.AdsRequest();
+    playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/nonlinear-ad.xml';
+    imaPlayer.addEventListener('AdStarted', () => {
+      const { offsetWidth, offsetHeight } = adElement.firstChild;
+      imaPlayer.destroy();
+      expect([offsetWidth, offsetHeight]).toEqual([
+        480, 78
+      ]);
+      done();
+    });
+    imaPlayer.playAds(playAdsRequest);
   });
 });

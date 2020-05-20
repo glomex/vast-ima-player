@@ -365,7 +365,7 @@ export class Player extends DelegatedEventTarget {
    * Returns current playhead time of either content or ad element.
    */
   get currentTime() {
-    if (this.#adCurrentTime) {
+    if (this.#adCurrentTime !== undefined) {
       return this.#adCurrentTime;
     }
     return this.#mediaElement.currentTime;
@@ -375,7 +375,7 @@ export class Player extends DelegatedEventTarget {
    * Returns current duration of either content or ad element.
    */
   get duration() {
-    if (this.#adDuration) {
+    if (this.#adDuration !== undefined) {
       return this.#adDuration;
     }
     return this.#mediaElement.duration;
@@ -390,7 +390,7 @@ export class Player extends DelegatedEventTarget {
   }
 
   /**
-   * Allows resizing the ad element. Useful when options.autoResize = false.
+   * Allows resizing the ad element. Useful when !== undefined options.autoResize = false.
    */
   resize(width: number, height: number) {
     this.#width = width;
@@ -513,6 +513,8 @@ export class Player extends DelegatedEventTarget {
           this._playContent();
         } else {
           this.#customPlayhead.disable();
+          this.#adDuration = ad.getDuration();
+          this.#adCurrentTime = 0;
         }
         this.#adElementChild.style.pointerEvents = 'auto';
         break;
