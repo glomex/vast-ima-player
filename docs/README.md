@@ -8,7 +8,7 @@ This library can be used to build a simple outstream player or it can be used to
 
 **VAST-IMA-Player** works in Chrome, Firefox, Edge, iOS Safari, Android and IE11. For IE11 you have to polyfill [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) when you want to use `loadImaSdk()`. In case you want the auto-resizing to work in older browsers you would have to polyfill [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver).
 
-[![gzip size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1.1.3/dist/vast-ima-player.umd.js?compression=gzip&label=gzip)](https://unpkg.com/@glomex/vast-ima-player@1.1.3/dist/vast-ima-player.umd.js) [![brotli size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1.1.3/dist/vast-ima-player.umd.js?compression=brotli&label=brotli)](https://unpkg.com/@glomex/vast-ima-player@1.1.3/dist/vast-ima-player.umd.js)
+[![gzip size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.umd.js?compression=gzip&label=gzip)](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.umd.js) [![brotli size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.umd.js?compression=brotli&label=brotli)](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.umd.js)
 
 ## Why
 
