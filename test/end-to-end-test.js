@@ -249,7 +249,7 @@ describe("VAST-IMA-Player", () => {
     });
   });
 
-  it("resizes container to nonlinear ad size", (done) => {
+  it("resizes ad display container to nonlinear ad size", (done) => {
     var adsRenderingSettings = new ima.AdsRenderingSettings();
     var imaPlayer = new vastImaPlayer.Player(
       google.ima,
