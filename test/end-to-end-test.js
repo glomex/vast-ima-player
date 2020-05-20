@@ -8,7 +8,7 @@ const vmapWithPreMidAndPostroll = `<?xml version="1.0" encoding="UTF-8"?>
         <Wrapper>
           <AdSystem></AdSystem>
           <VASTAdTagURI>
-            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad.xml]]>
+            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad-1s.xml]]>
           </VASTAdTagURI>
         </Wrapper>
       </Ad>
@@ -16,7 +16,7 @@ const vmapWithPreMidAndPostroll = `<?xml version="1.0" encoding="UTF-8"?>
         <Wrapper>
           <AdSystem></AdSystem>
           <VASTAdTagURI>
-            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad.xml]]>
+            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad-1s.xml]]>
           </VASTAdTagURI>
         </Wrapper>
       </Ad>
@@ -32,7 +32,7 @@ const vmapWithPreMidAndPostroll = `<?xml version="1.0" encoding="UTF-8"?>
         <Wrapper>
           <AdSystem></AdSystem>
           <VASTAdTagURI>
-            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad.xml]]>
+            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad-1s.xml]]>
           </VASTAdTagURI>
         </Wrapper>
       </Ad>
@@ -48,7 +48,7 @@ const vmapWithPreMidAndPostroll = `<?xml version="1.0" encoding="UTF-8"?>
         <Wrapper>
           <AdSystem></AdSystem>
           <VASTAdTagURI>
-            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad.xml]]>
+            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad-1s.xml]]>
           </VASTAdTagURI>
         </Wrapper>
       </Ad>
@@ -64,7 +64,7 @@ const vmapWithPreMidAndPostroll = `<?xml version="1.0" encoding="UTF-8"?>
         <Wrapper>
           <AdSystem></AdSystem>
           <VASTAdTagURI>
-            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad.xml]]>
+            <![CDATA[https://glomex.github.io/vast-ima-player/linear-ad-1s.xml]]>
           </VASTAdTagURI>
         </Wrapper>
       </Ad>
@@ -118,7 +118,7 @@ describe("VAST-IMA-Player", () => {
       adsRenderingSettings
     );
     var playAdsRequest = new ima.AdsRequest();
-    playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad.xml';
+    playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad-1s.xml';
     const collectedEvents = [];
     imaPlayer.addEventListener('MediaStart', () => collectedEvents.push('MediaStart'));
     imaPlayer.addEventListener('MediaImpression', () => {
@@ -169,11 +169,11 @@ describe("VAST-IMA-Player", () => {
         'MediaStart',
         'play',
         'pause',
-        ['AdStarted', 4, 0],
+        ['AdStarted', 1, 0],
         'AdProgress',
         'AdPaused',
         'AdResumed',
-        ['AdComplete', 4, 4],
+        ['AdComplete', 1, 1],
         'play',
         ['MediaImpression', 23, 0],
         'timeupdate',
