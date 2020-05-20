@@ -102,6 +102,9 @@ describe("VAST-IMA-Player", () => {
       document.body.appendChild(containerElement);
       containerElement.appendChild(mediaElement);
       containerElement.appendChild(adElement);
+      return new Promise((resolve) => {
+        mediaElement.addEventListener('loadedmetadata', resolve);
+      });
     });
   });
 
@@ -128,7 +131,7 @@ describe("VAST-IMA-Player", () => {
         parseInt(imaPlayer.currentTime, 10)
       ]);
       imaPlayer.pause();
-      imaPlayer.currentTime = imaPlayer.duration;
+      imaPlayer.currentTime = (imaPlayer.duration - 1);
       imaPlayer.play();
     });
     imaPlayer.addEventListener('AdStarted', () => {
@@ -203,7 +206,7 @@ describe("VAST-IMA-Player", () => {
       collectedEvents.push('MediaImpression');
       imaPlayer.pause();
       // jump after midroll and shortly in front of end
-      imaPlayer.currentTime = imaPlayer.duration - 1;
+      imaPlayer.currentTime = (imaPlayer.duration - 1);
       imaPlayer.play();
     });
     imaPlayer.addEventListener('AdStarted', (event) => {
@@ -266,6 +269,9 @@ describe("VAST-IMA-Player", () => {
         480, 78
       ]);
       done();
+    });
+    imaPlayer.addEventListener('AdError', (event) => {
+      throw event.error;
     });
     imaPlayer.playAds(playAdsRequest);
   });
