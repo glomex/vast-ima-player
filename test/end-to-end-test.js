@@ -109,7 +109,7 @@ describe("VAST-IMA-Player", () => {
     containerElement.parentNode.removeChild(containerElement);
   });
 
-  it("executes events in order for VAST adTagUrl", (done) => {
+  it("executes events in order when VAST adTagUrl is given", (done) => {
     var adsRenderingSettings = new ima.AdsRenderingSettings();
     var imaPlayer = new vastImaPlayer.Player(
       google.ima,
@@ -187,7 +187,7 @@ describe("VAST-IMA-Player", () => {
     });
   });
 
-  it("executes events in order for VMAP adsRespone", (done) => {
+  it("executes events in order when VMAP adsRespone is given", (done) => {
     var adsRenderingSettings = new ima.AdsRenderingSettings();
     var imaPlayer = new vastImaPlayer.Player(
       google.ima,
