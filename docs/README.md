@@ -131,6 +131,8 @@ loadImaSdk().then((ima) => {
 });
 ~~~
 
+Further usage examples of the API can be found in the [end-to-end tests](https://github.com/glomex/vast-ima-player/blob/master/test/end-to-end-test.js#L77).
+
 ### IMA Resources
 
 These IMA documentation pages will probably be relevant when using VAST-IMA-Player because those APIs stayed the same:
