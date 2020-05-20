@@ -6,6 +6,9 @@ This library can be used to build a simple outstream player or it can be used to
 
 [View Documentation](https://glomex.github.io/vast-ima-player)
 
+[![gzip size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js?compression=gzip&label=gzip)](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js)
+[![brotli size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js?compression=brotli&label=brotli)](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js)
+
 ## License
 
 [Apache 2.0 License](https://oss.ninja/apache-2.0-header/glomex)

@@ -1,12 +1,15 @@
-## Summary
+## Introduction
 
 **VAST-IMA-Player** is a convenience layer around [Google Interactive Media Ads HTML5 SDK](https://developers.google.com/interactive-media-ads/docs/sdks/html5) (short: IMA) which tries to make using IMA less cumbersome for common monetization usecases.
 
 This library can be used to build a simple outstream player or it can be used to implement more complex monetization scenarios. VAST-IMA-Player can monetize any content media player (with pre-, mid and postrolls), which follows the browser-built-in [HTMLMediaElement API](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement).
 
-### Browser Support
+## Browser Support
 
 **VAST-IMA-Player** works in Chrome, Firefox, Edge, iOS Safari, Android and IE11. For IE11 you have to polyfill [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) when you want to use `loadImaSdk()`. In case you want the auto-resizing to work in older browsers you would have to polyfill [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver).
+
+[![gzip size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js?compression=gzip&label=gzip)](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js)
+[![brotli size](http://img.badgesize.io/https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js?compression=brotli&label=brotli)](https://unpkg.com/@glomex/vast-ima-player@1/dist/vast-ima-player.js)
 
 ## Why
 
@@ -45,8 +48,8 @@ This library focuses on managing the actual media monetization lifecycle and on 
   </head>
   <body>
     <div id="videoContainer" style="max-width:600px; position:relative;">
-      <video style="width:100%; height:100%;" id="mediaElement" controls playsinline poster="https://peach.blender.org/wp-content/uploads/bbb-splash.png" preload="none">
-        <source type="video/mp4" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
+      <video style="width:100%; height:100%;" id="mediaElement" controls playsinline poster="https://glomex.github.io/vast-ima-player/big-buck-bunny.png" preload="none">
+        <source type="video/mp4" src="https://glomex.github.io/vast-ima-player/big-buck-bunny.mp4">
       </video>
       <!-- the ad-container needs to be placed above the video container -->
       <div id="adContainer" style="position:absolute; left:0; top:0;"></div>
@@ -149,3 +152,8 @@ You can find the source on GitHub: https://github.com/glomex/vast-ima-player
 ## License
 
 [Apache 2.0 License](https://oss.ninja/apache-2.0-header/glomex)
+
+## Attribution
+
+- [big-buck-bunny.mp4](./big-buck-bunny.mp4) was downloaded from https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_first_23_seconds_1080p.ogv and converted to mp4.
+- [big-buck-bunny.png](./big-buck-bunny.png) was downloaded from https://peach.blender.org/wp-content/uploads/bbb-splash.png.
