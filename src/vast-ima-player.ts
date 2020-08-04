@@ -273,11 +273,9 @@ export class Player extends DelegatedEventTarget {
    * - With a single VMAP at the beginning
    */
   playAds(adsRequest: google.ima.AdsRequest) {
-    const { muted } = this.#mediaElement;
     this.reset();
     this.activate();
 
-    adsRequest.setAdWillPlayMuted(muted);
     adsRequest.linearAdSlotWidth = this.#width;
     adsRequest.linearAdSlotHeight = this.#height;
     adsRequest.nonLinearAdSlotWidth = this.#width;
@@ -390,7 +388,7 @@ export class Player extends DelegatedEventTarget {
   }
 
   /**
-   * Allows resizing the ad element. Useful when !== undefined options.autoResize = false.
+   * Allows resizing the ad element. Useful when options.autoResize = false.
    */
   resize(width: number, height: number) {
     this.#width = width;
@@ -623,7 +621,10 @@ export class Player extends DelegatedEventTarget {
 
   private _resizeObserverCallback(entries) {
     for (let entry of entries) {
-      if (entry.contentBoxSize) {
+      if (entry.contentBoxSize && entry.contentBoxSize.length === 1) {
+        this.#width = entry.contentBoxSize[0].inlineSize;
+        this.#height = entry.contentBoxSize[0].blockSize;
+      } else if (entry.contentBoxSize && entry.contentBoxSize.inlineSize) {
         this.#width = entry.contentBoxSize.inlineSize;
         this.#height = entry.contentBoxSize.blockSize;
       } else {

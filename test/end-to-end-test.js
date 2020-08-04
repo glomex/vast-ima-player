@@ -252,13 +252,47 @@ describe("VAST-IMA-Player", () => {
     });
   });
 
-  it("resizes ad display container to nonlinear ad size", (done) => {
+  it("resizes ad display container to the size of the media element", (done) => {
     var adsRenderingSettings = new ima.AdsRenderingSettings();
+    var playerOptions = {
+      // autoResize=true is default but naming it in the test makes it more explicit
+      autoResize: true
+    };
     var imaPlayer = new vastImaPlayer.Player(
       google.ima,
       mediaElement,
       adElement,
-      adsRenderingSettings
+      adsRenderingSettings,
+      playerOptions
+    );
+    var playAdsRequest = new ima.AdsRequest();
+    playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad.xml';
+    imaPlayer.addEventListener('AdStarted', () => {
+      const { offsetWidth, offsetHeight } = adElement.firstChild;
+      imaPlayer.destroy();
+      expect([offsetWidth, offsetHeight]).toEqual([
+        600, 338
+      ]);
+      done();
+    });
+    imaPlayer.addEventListener('AdError', (event) => {
+      throw event.error;
+    });
+    imaPlayer.playAds(playAdsRequest);
+  });
+
+  it("resizes ad display container to nonlinear ad size", (done) => {
+    var adsRenderingSettings = new ima.AdsRenderingSettings();
+    var playerOptions = {
+      // autoResize=true is default but naming it in the test makes it more explicit
+      autoResize: true
+    };
+    var imaPlayer = new vastImaPlayer.Player(
+      google.ima,
+      mediaElement,
+      adElement,
+      adsRenderingSettings,
+      playerOptions
     );
     var playAdsRequest = new ima.AdsRequest();
     playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/nonlinear-ad.xml';
