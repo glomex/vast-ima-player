@@ -3,7 +3,7 @@ import CustomEvent from '@ungap/custom-event';
 import { CustomPlayhead } from './custom-playhead';
 import { DelegatedEventTarget } from './delegated-event-target';
 
-const IGNORE_UNTIL_CURRENT_TIME = 0.1;
+const IGNORE_UNTIL_CURRENT_TIME = 0.5;
 const MEDIA_ELEMENT_EVENTS = [
   'abort', 'canplay', 'canplaythrough',
   'durationchange', 'emptied', 'ended',
