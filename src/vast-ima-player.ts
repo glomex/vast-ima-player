@@ -193,15 +193,18 @@ export class Player extends DelegatedEventTarget {
     // for iOS to reset to initial content state
     this.#adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
 
-    const disableCustomPlaybackForIOS10Plus = Boolean(
-      options.disableCustomPlaybackForIOS10Plus
-      && this.#mediaElement.hasAttribute('playsinline')
-    );
+    if (options.disableCustomPlaybackForIOS10Plus
+      && !this.#mediaElement.hasAttribute('playsinline')
+    ) {
+      // assign "playsinline" when on iOS two video elements
+      // will be used for content and ad playback
+      this.#mediaElement.setAttribute('playsinline', '');
+    }
 
     this.#adDisplayContainer = new ima.AdDisplayContainer(
       adElement,
       // used as single element for linear ad playback on iOS
-      disableCustomPlaybackForIOS10Plus ? undefined : mediaElement,
+      options.disableCustomPlaybackForIOS10Plus ? undefined : mediaElement,
       // allows to override the 'Learn More' button on mobile
       options.clickTrackingElement
     );
@@ -209,7 +212,7 @@ export class Player extends DelegatedEventTarget {
     this.#adElementChild.style.pointerEvents = 'none';
     this.#adsLoader = new ima.AdsLoader(this.#adDisplayContainer);
     this.#ima.settings.setDisableCustomPlaybackForIOS10Plus(
-      disableCustomPlaybackForIOS10Plus
+      options.disableCustomPlaybackForIOS10Plus
     );
 
     // later used for to determine playhead for triggering midrolls
