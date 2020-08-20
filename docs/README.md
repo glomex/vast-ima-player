@@ -156,5 +156,5 @@ You can find the source on GitHub: https://github.com/glomex/vast-ima-player
 
 ## Attribution
 
-- [big-buck-bunny.mp4](./big-buck-bunny.mp4) was downloaded from https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_first_23_seconds_1080p.ogv and converted to mp4.
-- [big-buck-bunny.png](./big-buck-bunny.png) was downloaded from https://peach.blender.org/wp-content/uploads/bbb-splash.png.
+- [big-buck-bunny.mp4](./big-buck-bunny.mp4) was downloaded from [here](https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_first_23_seconds_1080p.ogv) and converted to mp4.
+- [big-buck-bunny.png](./big-buck-bunny.png) was downloaded from [here](https://peach.blender.org/wp-content/uploads/bbb-splash.png).
