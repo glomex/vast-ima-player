@@ -1,3 +1,4 @@
+/* tslint:disable:max-classes-per-file */
 import type { ImaSdk } from '@alugha/ima';
 import CustomEvent from '@ungap/custom-event';
 import { CustomPlayhead } from './custom-playhead';
@@ -36,7 +37,7 @@ enum ImaToAdEventMap {
   /**
    * Fired when an ad error occurred (standalone ad or ad within an ad rule).
    * IMA provides these events on different objects and this event normalizes it.
-   * */
+   */
   AD_ERROR = 'AdError',
   /** Fired when the ad has stalled playback to buffer. */
   AD_BUFFERING = 'AdBuffering',
@@ -123,6 +124,15 @@ export const PlayerEvent = {
   ...AdditionalMediaEvent,
 };
 
+export class PlayerOptions {
+  /** Sets whether to disable custom playback on iOS 10+ browsers. If true, ads will play inline if the content video is inline. This enables TrueView skippable ads. However, the ad will stay inline and not support iOS's native fullscreen. */
+  disableCustomPlaybackForIOS10Plus: boolean = false;
+  /** Enables or disables auto resizing of adsManager. If enabled it also resizes non-linear ads. */
+  autoResize: boolean = true;
+  /** Allows to have a separate 'Learn More' click tracking element on mobile. */
+  clickTrackingElement?: HTMLElement
+}
+
 export class PlayerError extends Error {
   errorCode: number;
   innerError: Error;
@@ -134,22 +144,13 @@ export class PlayerError extends Error {
   }
 }
 
-export class PlayerOptions {
-  /** Sets whether to disable custom playback on iOS 10+ browsers. If true, ads will play inline if the content video is inline. This enables TrueView skippable ads. However, the ad will stay inline and not support iOS's native fullscreen. */
-  disableCustomPlaybackForIOS10Plus: boolean = false;
-  /** Enables or disables auto resizing of adsManager. If enabled it also resizes non-linear ads. */
-  autoResize: boolean = true;
-  /** Allows to have a separate 'Learn More' click tracking element on mobile. */
-  clickTrackingElement?: HTMLElement
-}
-
 type StartAd = {
-  start: Function,
+  start: () => void,
   ad?: google.ima.Ad,
-  adBreakTime?: Number
-;}
+  adBreakTime?: number
+};
 
-interface startAdCallback {(startAd: StartAd): void };
+type StartAdCallback = (startAd: StartAd) => void;
 
 /**
  * Convenience player wrapper for the Google IMA HTML5 SDK
@@ -171,10 +172,10 @@ export class Player extends DelegatedEventTarget {
   #currentAd: google.ima.Ad;
   #mediaStartTriggered: boolean = false;
   #mediaImpressionTriggered: boolean = false;
-  #cuePoints: Array<number> = [];
+  #cuePoints: number[] = [];
   #adCurrentTime: number;
   #adDuration: number;
-  #startAdCallback: startAdCallback;
+  #startAdCallback: StartAdCallback;
 
   constructor(
     ima: ImaSdk,
@@ -208,7 +209,7 @@ export class Player extends DelegatedEventTarget {
       // allows to override the 'Learn More' button on mobile
       options.clickTrackingElement
     );
-    this.#adElementChild = <HTMLElement>adElement.firstChild;
+    this.#adElementChild = (adElement.firstChild as HTMLElement);
     this.#adElementChild.style.pointerEvents = 'none';
     this.#adsLoader = new ima.AdsLoader(this.#adDisplayContainer);
     this.#ima.settings.setDisableCustomPlaybackForIOS10Plus(
@@ -263,7 +264,7 @@ export class Player extends DelegatedEventTarget {
     if (!this.#mediaElement.dataset.activated) {
       // ignore play result
       try {
-        this.#mediaElement.play().catch(() => {});
+        this.#mediaElement.play().catch(() => undefined);
       } catch(e) {
         // ignore
       }
@@ -305,7 +306,7 @@ export class Player extends DelegatedEventTarget {
    * VAST ad or starts the VMAP ad break. If "start" method is not called
    * it won't play the ad.
    */
-  loadAds(adsRequest: google.ima.AdsRequest, startAdCallback: startAdCallback) {
+  loadAds(adsRequest: google.ima.AdsRequest, startAdCallback: StartAdCallback) {
     this.playAds(adsRequest);
     this.#startAdCallback = startAdCallback;
     // overwrites autoPlayAdBreaks settings of "playAds"
@@ -621,7 +622,7 @@ export class Player extends DelegatedEventTarget {
         if (adDataLog.adError) {
           const imaError = {
             getError: () => adDataLog.adError,
-            getUserRequestContext: () => {}
+            getUserRequestContext: () => undefined
           };
           this._onAdError(imaError);
         }
@@ -678,7 +679,7 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _resizeObserverCallback(entries) {
-    for (let entry of entries) {
+    for (const entry of entries) {
       if (entry.contentBoxSize && entry.contentBoxSize.length === 1) {
         this.#width = entry.contentBoxSize[0].inlineSize;
         this.#height = entry.contentBoxSize[0].blockSize;
