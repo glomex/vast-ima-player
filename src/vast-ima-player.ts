@@ -143,6 +143,14 @@ export class PlayerOptions {
   clickTrackingElement?: HTMLElement
 }
 
+type StartAd = {
+  start: Function,
+  ad?: google.ima.Ad,
+  adBreakTime?: Number
+;}
+
+interface startAdCallback {(startAd: StartAd): void };
+
 /**
  * Convenience player wrapper for the Google IMA HTML5 SDK
  */
@@ -166,6 +174,7 @@ export class Player extends DelegatedEventTarget {
   #cuePoints: Array<number> = [];
   #adCurrentTime: number;
   #adDuration: number;
+  #startAdCallback: startAdCallback;
 
   constructor(
     ima: ImaSdk,
@@ -202,9 +211,6 @@ export class Player extends DelegatedEventTarget {
     this.#ima.settings.setDisableCustomPlaybackForIOS10Plus(
       disableCustomPlaybackForIOS10Plus
     );
-    // the case if a an adbreak should not be played can be controlled
-    // via given VMAP instead
-    this.#ima.settings.setAutoPlayAdBreaks(true);
 
     // later used for to determine playhead for triggering midrolls
     // and to determine whether the player is currently playing content
@@ -276,12 +282,31 @@ export class Player extends DelegatedEventTarget {
     this.reset();
     this.activate();
 
+    this.#ima.settings.setAutoPlayAdBreaks(true);
+
     adsRequest.linearAdSlotWidth = this.#width;
     adsRequest.linearAdSlotHeight = this.#height;
     adsRequest.nonLinearAdSlotWidth = this.#width;
     adsRequest.nonLinearAdSlotHeight = this.#height;
 
     this.#adsLoader.requestAds(adsRequest);
+  }
+
+  /**
+   * Similar to "playAds" method but with the difference
+   * that it allows to first load the ad and start it separately
+   * within the given callback.
+   *
+   * When a VAST or a VMAP ad break is given the callback is called
+   * with a "start" method which either starts playing the individual
+   * VAST ad or starts the VMAP ad break. If "start" method is not called
+   * it won't play the ad.
+   */
+  loadAds(adsRequest: google.ima.AdsRequest, startAdCallback: startAdCallback) {
+    this.playAds(adsRequest);
+    this.#startAdCallback = startAdCallback;
+    // overwrites autoPlayAdBreaks settings of "playAds"
+    this.#ima.settings.setAutoPlayAdBreaks(false);
   }
 
   /**
@@ -404,6 +429,7 @@ export class Player extends DelegatedEventTarget {
   reset() {
     this._resetAd();
     this.#cuePoints = [];
+    this.#startAdCallback = undefined;
     if (this.#adsManager) {
       // see https://developers.google.com/interactive-media-ads/docs/sdks/html5/faq#8
       this.#adsManager.destroy();
@@ -495,6 +521,32 @@ export class Player extends DelegatedEventTarget {
 
     // @ts-ignore
     switch(event.type) {
+      case AdEvent.Type.LOADED:
+        // For an individual VAST ad inform on "LOADED" to
+        // to allow starting the ad manually.
+        // In case of VMAP it could preload ads before the
+        // actual ad break. For VMAP it allows starting the ad
+        // on "AD_BREAK_READY" instead.
+        if (this.#startAdCallback && this.#cuePoints.length === 0) {
+          this.#startAdCallback({
+            ad: event.getAd(),
+            start: () => {
+              this.#adsManager.start();
+            }
+          });
+        }
+        break;
+      case AdEvent.Type.AD_BREAK_READY:
+        // for a VMAP schedule
+        if (this.#startAdCallback) {
+          this.#startAdCallback({
+            adBreakTime: event.getAdData().adBreakTime,
+            start: () => {
+              this.#adsManager.start();
+            }
+          });
+        }
+        break;
       case AdEvent.Type.STARTED:
         const ad = this.#currentAd = event.getAd();
         // when playing an ad-pod IMA uses two video-tags
@@ -591,7 +643,7 @@ export class Player extends DelegatedEventTarget {
         if (PlayerEvent[imaEventName]) {
           this.dispatchEvent(new CustomEvent(PlayerEvent[imaEventName], {
             detail: {
-              ad: this.#currentAd || event.getAd()
+              ad: event.getAd() || this.#currentAd
             }
           }));
         }
@@ -602,8 +654,11 @@ export class Player extends DelegatedEventTarget {
     // start ad playback
     try {
       adsManager.init(this.#width, this.#height, this._getViewMode());
-      // ensures to synchronize initial media-player state (e.g. muted state)
-      adsManager.start();
+      if (!this.#startAdCallback) {
+        // ensures to synchronize initial media-player state (e.g. muted state)
+        // and auto-start ad / ads
+        adsManager.start();
+      }
     } catch (adError) {
       this._onAdError(adError);
     }

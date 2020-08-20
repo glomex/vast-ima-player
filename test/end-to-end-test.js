@@ -309,4 +309,52 @@ describe("VAST-IMA-Player", () => {
     });
     imaPlayer.playAds(playAdsRequest);
   });
+
+  it('can "start" the ad within "loadAds" separately to loading the ad', (done) => {
+    var adsRenderingSettings = new ima.AdsRenderingSettings();
+    var imaPlayer = new vastImaPlayer.Player(
+      google.ima,
+      mediaElement,
+      adElement,
+      adsRenderingSettings
+    );
+    var playAdsRequest = new ima.AdsRequest();
+    playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad-1s.xml';
+
+    imaPlayer.addEventListener('AdStarted', ({ detail }) => {
+      imaPlayer.destroy();
+      expect(detail.ad.getAdPodInfo().getTotalAds()).toEqual(1);
+      expect(detail.ad.getAdPodInfo().getAdPosition()).toEqual(1);
+      expect(detail.ad.getAdPodInfo().getTimeOffset()).toEqual(0);
+      done();
+    });
+
+    imaPlayer.loadAds(playAdsRequest, ({ start }) => {
+      start();
+    });
+  });
+
+  it('does not start the ad when "start" is not called in "loadAds" callback', (done) => {
+    var adsRenderingSettings = new ima.AdsRenderingSettings();
+    var imaPlayer = new vastImaPlayer.Player(
+      google.ima,
+      mediaElement,
+      adElement,
+      adsRenderingSettings
+    );
+    var playAdsRequest = new ima.AdsRequest();
+    playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad-1s.xml';
+
+    imaPlayer.addEventListener('AdLoaded', () => {
+      setTimeout(done, 250);
+    });
+
+    imaPlayer.addEventListener('AdStarted', () => {
+      throw new Error('"AdStarted" got called, which should not happen.');
+    });
+
+    imaPlayer.loadAds(playAdsRequest, () => {
+      // do nothing
+    });
+  });
 });
