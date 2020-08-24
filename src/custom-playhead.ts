@@ -76,6 +76,13 @@ export class CustomPlayhead {
     this.#mediaElement.pause();
   }
 
+  reset() {
+    this.#currentTime = 0;
+    this.#enabled = false;
+    this.seeking = false;
+    this.enable();
+  }
+
   destroy() {
     this.disable();
     this.#mediaElement = undefined;

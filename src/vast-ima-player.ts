@@ -260,17 +260,16 @@ export class Player extends DelegatedEventTarget {
    * have to do async work before calling "playAds".
    */
   activate() {
-    // activate assigned mediaElement for future 'play' calls
-    if (!this.#mediaElement.dataset.activated) {
+    if (this.#mediaElement.paused) {
       // ignore play result
       try {
+        // always calling play to trigger a fresh MediaStart
         this.#mediaElement.play().catch(() => undefined);
       } catch(e) {
         // ignore
       }
-      this.#mediaElement.pause();
-      this.#mediaElement.dataset.activated = '1';
     }
+    this.#mediaElement.pause();
     this.#adDisplayContainer.initialize();
   }
 
@@ -283,6 +282,11 @@ export class Player extends DelegatedEventTarget {
    * - With a single VMAP at the beginning
    */
   playAds(adsRequest: google.ima.AdsRequest) {
+    // in case of replay we go back to start
+    if (this.#mediaElement.ended) {
+      this.#customPlayhead.reset();
+      this.#mediaElement.currentTime = 0;
+    }
     this.reset();
     this.activate();
 
@@ -625,11 +629,13 @@ export class Player extends DelegatedEventTarget {
         this._playContent();
         break;
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
+        this._resetAd();
+        this.#currentAd = event.getAd();
         this.#adElement.style.pointerEvents = 'auto';
         this.#mediaElement.pause();
         this._resizeAdsManager();
-        if (event.getAd()) {
-          this._adjustCuePoints(event.getAd().getAdPodInfo().getTimeOffset());
+        if (this.#currentAd) {
+          this._adjustCuePoints(this.#currentAd.getAdPodInfo().getTimeOffset());
         }
         // synchronize volume state because IMA does not do that
         this.#adsManager.setVolume(
