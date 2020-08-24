@@ -529,11 +529,11 @@ export class Player extends DelegatedEventTarget {
           this.#adsManager.stop();
         }
       }
-      const cuePoint = cuePointsAfterJump.pop();
+      const cuePointToRemove = cuePointsAfterJump.pop();
       // in case the ad-break lead to an error it cannot be detected which
       // ad break was affected because IMA could've preloaded an ad-break
       // without emitting an event for it
-      this._adjustCuePoints(cuePoint);
+      this._adjustCuePoints(cuePointToRemove);
       if (!this.#mediaImpressionTriggered) {
         this.dispatchEvent(
           new CustomEvent(PlayerEvent.MEDIA_IMPRESSION)
