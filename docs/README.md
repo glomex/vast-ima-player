@@ -29,6 +29,10 @@ This library focuses on managing the actual media monetization lifecycle and on 
 * It auto-resizes the IMA ad container (but also allows manual control).
 * Synchronizes volume & muted state when switching between ad and content
 
+## Limitations
+
+* In case you want to use non-linear ads within VMAP ad breaks you should not rely on the IMA built-in VMAP ad scheduling because it is buggy. Recommendation is to play individual ads instead.
+
 ## Quick Start
 
 ~~~html
