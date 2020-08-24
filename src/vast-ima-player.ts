@@ -311,6 +311,12 @@ export class Player extends DelegatedEventTarget {
     this.#ima.settings.setAutoPlayAdBreaks(false);
   }
 
+  skipAd() {
+    if (this.#adsManager) {
+      this.#adsManager.skip();
+    }
+  }
+
   /**
    * Starts playback of either content or ad element.
    */
