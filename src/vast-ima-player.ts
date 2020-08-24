@@ -210,7 +210,7 @@ export class Player extends DelegatedEventTarget {
       // allows to override the 'Learn More' button on mobile
       options.clickTrackingElement
     );
-    this.#adElement.style.pointerEvents = 'none';
+    this.#adElement.style.display = 'none';
     this.#adsLoader = new ima.AdsLoader(this.#adDisplayContainer);
     this.#ima.settings.setDisableCustomPlaybackForIOS10Plus(
       options.disableCustomPlaybackForIOS10Plus
@@ -500,7 +500,7 @@ export class Player extends DelegatedEventTarget {
     this.#currentAd = undefined;
     this.#adCurrentTime = undefined;
     this.#adDuration = undefined;
-    this.#adElement.style.pointerEvents = 'none';
+    this.#adElement.style.display = 'none';
     this.#adElement.classList.remove('nonlinear');
     if (this.#adsManager) {
       // just ensure to start from defined width/height
@@ -622,7 +622,7 @@ export class Player extends DelegatedEventTarget {
           this.#adDuration = ad.getDuration();
           this.#adCurrentTime = 0;
         }
-        this.#adElement.style.pointerEvents = 'auto';
+        this.#adElement.style.display = '';
         break;
       case AdEvent.Type.ALL_ADS_COMPLETED:
         this.reset();
@@ -631,7 +631,7 @@ export class Player extends DelegatedEventTarget {
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
         this._resetAd();
         this.#currentAd = event.getAd();
-        this.#adElement.style.pointerEvents = 'auto';
+        this.#adElement.style.display = '';
         this.#mediaElement.pause();
         this._resizeAdsManager();
         if (this.#currentAd) {
@@ -782,7 +782,7 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _playContent() {
-    this.#adElement.style.pointerEvents = 'none';
+    this.#adElement.style.display = 'none';
     if (!this.#mediaElement.ended) {
       this.#customPlayhead.enable();
       this.#mediaElement.play();
