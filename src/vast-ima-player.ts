@@ -25,7 +25,9 @@ enum AdditionalMediaEvent {
   /** Fired when the first frame of the media file is played after linear preroll. */
   MEDIA_IMPRESSION = 'MediaImpression',
   /** Fired when the media file playback finished after potential postroll. */
-  MEDIA_STOP = 'MediaStop'
+  MEDIA_STOP = 'MediaStop',
+  /** Fired when ad break cue points change. */
+  MEDIA_CUE_POINTS_CHANGE = 'MediaCuePointsChange'
 }
 
 /**
@@ -413,11 +415,33 @@ export class Player extends DelegatedEventTarget {
   }
 
   /**
-   * Returns list of ad break cue points.
+   * Returns list of ad break cue points that weren't played yet.
    * Only available after "AdMetadata" event when VMAP is passed in playAds.
    */
   get cuePoints() {
     return this.#cuePoints;
+  }
+
+  private _setCuePoints(cuePoints: number[]) {
+    this.#cuePoints = cuePoints;
+    this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_CUE_POINTS_CHANGE, {
+      detail: { cuePoints: this.#cuePoints }
+    }));
+  }
+
+  /**
+   * Remove already played cuepoints
+   *
+   * @param timeOffset offset in seconds as defined in VMAP or 0 for preroll and -1 for postroll
+   */
+  private _adjustCuePoints(timeOffset) {
+    const cuePointIndex = this.cuePoints.indexOf(
+      timeOffset
+    );
+    if (cuePointIndex > -1) {
+      this.#cuePoints.splice(cuePointIndex, 1);
+      this._setCuePoints(this.#cuePoints);
+    }
   }
 
   /**
@@ -489,6 +513,23 @@ export class Player extends DelegatedEventTarget {
       if (this.#mediaElement.currentTime < IGNORE_UNTIL_CURRENT_TIME) {
         return;
       }
+      const cuePointsAfterJump = this.#cuePoints.filter((cuePoint) => {
+        return (cuePoint >= 0 && cuePoint < this.#customPlayhead.currentTime);
+      });
+      // Special handling when setAutoPlayAdBreaks = false
+      // in combination with non-linear ads.
+      // Discard previously started non-linear ad before IMA tries to play
+      // next linear ad. It won't play it otherwise.
+      if (this.#startAdCallback) {
+        if (cuePointsAfterJump.length > 0 && this.#currentAd && !this.#currentAd.isLinear()) {
+          this.#adsManager.stop();
+        }
+      }
+      const cuePoint = cuePointsAfterJump.pop();
+      // in case the ad-break lead to an error it cannot be detected which
+      // ad break was affected because IMA could've preloaded an ad-break
+      // without emitting an event for it
+      this._adjustCuePoints(cuePoint);
       if (!this.#mediaImpressionTriggered) {
         this.dispatchEvent(
           new CustomEvent(PlayerEvent.MEDIA_IMPRESSION)
@@ -547,6 +588,7 @@ export class Player extends DelegatedEventTarget {
         }
         break;
       case AdEvent.Type.AD_BREAK_READY:
+        this._resetAd();
         // for a VMAP schedule
         if (this.#startAdCallback) {
           this.#startAdCallback({
@@ -586,6 +628,9 @@ export class Player extends DelegatedEventTarget {
         this.#adElement.style.pointerEvents = 'auto';
         this.#mediaElement.pause();
         this._resizeAdsManager();
+        if (event.getAd()) {
+          this._adjustCuePoints(event.getAd().getAdPodInfo().getTimeOffset());
+        }
         // synchronize volume state because IMA does not do that
         this.#adsManager.setVolume(
           this.#mediaElement.muted ? 0 : this.#mediaElement.volume
@@ -601,16 +646,6 @@ export class Player extends DelegatedEventTarget {
           this.#mediaElement.volume = this.#adsManager.getVolume();
         }
 
-        // remove already played cuepoints
-        if (this.#currentAd) {
-          const cuePointIndex = this.#cuePoints.indexOf(
-            this.#currentAd.getAdPodInfo().getTimeOffset()
-          );
-          if (cuePointIndex > -1) {
-            this.#cuePoints.splice(cuePointIndex, 1);
-          }
-        }
-
         if (this.#mediaElement.ended) {
           // after postroll
           this.reset();
@@ -621,7 +656,7 @@ export class Player extends DelegatedEventTarget {
         this._playContent();
         break;
       case AdEvent.Type.AD_METADATA:
-        this.#cuePoints = this.#adsManager.getCuePoints();
+        this._setCuePoints(this.#adsManager.getCuePoints());
         break;
       case AdEvent.Type.LOG:
         // this gets triggered when individual positions of VMAP fail
