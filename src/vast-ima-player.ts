@@ -158,7 +158,6 @@ type StartAdCallback = (startAd: StartAd) => void;
 export class Player extends DelegatedEventTarget {
   #mediaElement: HTMLVideoElement;
   #adElement: HTMLElement;
-  #adElementChild: HTMLElement;
   #customPlayhead: CustomPlayhead;
   #adsRenderingSettings: google.ima.AdsRenderingSettings;
   #ima: ImaSdk;
@@ -209,8 +208,7 @@ export class Player extends DelegatedEventTarget {
       // allows to override the 'Learn More' button on mobile
       options.clickTrackingElement
     );
-    this.#adElementChild = (adElement.firstChild as HTMLElement);
-    this.#adElementChild.style.pointerEvents = 'none';
+    this.#adElement.style.pointerEvents = 'none';
     this.#adsLoader = new ima.AdsLoader(this.#adDisplayContainer);
     this.#ima.settings.setDisableCustomPlaybackForIOS10Plus(
       options.disableCustomPlaybackForIOS10Plus
@@ -419,12 +417,14 @@ export class Player extends DelegatedEventTarget {
   /**
    * Allows resizing the ad element. Useful when options.autoResize = false.
    */
-  resize(width: number, height: number) {
+  resizeAd(width: number, height: number) {
     this.#width = width;
     this.#height = height;
     if (this.#adsManager) {
       this.#adsManager.resize(width, height, this._getViewMode());
     }
+    this.#adElement.style.width = `${width}px`;
+    this.#adElement.style.height = `${height}px`;
   }
 
   /**
@@ -466,7 +466,7 @@ export class Player extends DelegatedEventTarget {
     this.#currentAd = undefined;
     this.#adCurrentTime = undefined;
     this.#adDuration = undefined;
-    this.#adElementChild.style.pointerEvents = 'none';
+    this.#adElement.style.pointerEvents = 'none';
     this.#adElement.classList.remove('nonlinear');
     if (this.#adsManager) {
       // just ensure to start from defined width/height
@@ -570,15 +570,16 @@ export class Player extends DelegatedEventTarget {
           this.#adDuration = ad.getDuration();
           this.#adCurrentTime = 0;
         }
-        this.#adElementChild.style.pointerEvents = 'auto';
+        this.#adElement.style.pointerEvents = 'auto';
         break;
       case AdEvent.Type.ALL_ADS_COMPLETED:
         this.reset();
         this._playContent();
         break;
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
-        this.#adElementChild.style.pointerEvents = 'auto';
+        this.#adElement.style.pointerEvents = 'auto';
         this.#mediaElement.pause();
+        this._resizeAdsManager();
         // synchronize volume state because IMA does not do that
         this.#adsManager.setVolume(
           this.#mediaElement.muted ? 0 : this.#mediaElement.volume
@@ -702,14 +703,16 @@ export class Player extends DelegatedEventTarget {
     const isNonLinearAd = ad && !ad.isLinear();
 
     if (!isNonLinearAd) {
-      this.#adsManager.resize(this.#width, this.#height, viewMode);
+      this.resizeAd(this.#width, this.#height);
     } else if (ad) {
       if (ad.getWidth() > this.#width || ad.getHeight() > this.#height) {
-        this.#adsManager.resize(this.#width, this.#height, viewMode);
+        this.resizeAd(this.#width, this.#height);
       } else {
-        // in case we won't add 8 pixels it triggers a VAST error
+        // in case we won't add 4 pixels it triggers a VAST error
         // that there is not enough space to render the nonlinear ad
-        this.#adsManager.resize(ad.getWidth(), ad.getHeight() + 8, viewMode);
+        this.#adsManager.resize(ad.getWidth(), ad.getHeight() + 4, viewMode);
+        this.#adElement.style.width = `${ad.getWidth()}px`;
+        this.#adElement.style.height = `${ad.getHeight() + 4}px`;
       }
     }
   }
@@ -732,7 +735,7 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _playContent() {
-    this.#adElementChild.style.pointerEvents = 'none';
+    this.#adElement.style.pointerEvents = 'none';
     if (!this.#mediaElement.ended) {
       this.#customPlayhead.enable();
       this.#mediaElement.play();
