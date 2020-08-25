@@ -32,6 +32,7 @@ This library focuses on managing the actual media monetization lifecycle and on 
 ## Limitations
 
 * In case you want to use a non-linear ad in front of a postroll VMAP ad break you should put an empty ad break at the end of the content to avoid that Google IMA preloads the postroll during non-linear ad, which lets the nonlinear ad disappear.
+* Using `loadAds` to load a VMAP with a non-linear-ad followed by a linear ad will break rendering the linear ad. IMA does not properly reset the previous nonlinear ad when `autoPlayAdBreaks` is set to `false` and a manual `adsManager.start()` is triggered.
 
 ## Quick Start
 
