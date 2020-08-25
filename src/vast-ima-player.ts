@@ -521,16 +521,16 @@ export class Player extends DelegatedEventTarget {
         const cuePointsAfterJump = this.#adsManager.getCuePoints().filter((cuePoint) => {
           return (cuePoint >= 0 && cuePoint < this.#customPlayhead.currentTime);
         });
+        const cuePointToRemove = cuePointsAfterJump.pop();
         // Special handling when setAutoPlayAdBreaks = false
         // in combination with non-linear ads.
         // Discard previously started non-linear ad before IMA tries to play
         // next linear ad. It won't play it otherwise.
         if (this.#startAdCallback) {
-          if (cuePointsAfterJump.length > 0 && this.#currentAd && !this.#currentAd.isLinear()) {
+          if (this.#cuePoints.indexOf(cuePointToRemove) > -1 && this.#currentAd && !this.#currentAd.isLinear()) {
             this.#adsManager.stop();
           }
         }
-        const cuePointToRemove = cuePointsAfterJump.pop();
         // in case the ad-break lead to an error it cannot be detected which
         // ad break was affected because IMA could've preloaded an ad-break
         // without emitting an event for it
