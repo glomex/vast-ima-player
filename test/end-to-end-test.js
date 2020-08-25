@@ -205,7 +205,7 @@ describe("VAST-IMA-Player", () => {
     imaPlayer.addEventListener('MediaImpression', () => {
       collectedEvents.push('MediaImpression');
       imaPlayer.pause();
-      // jump after midroll and shortly in front of end
+      // jump after second midroll and shortly in front of end
       imaPlayer.currentTime = (imaPlayer.duration - 1);
       imaPlayer.play();
     });
@@ -227,6 +227,12 @@ describe("VAST-IMA-Player", () => {
         event.detail.ad.getAdPodInfo().getTimeOffset()
       ]);
     });
+    imaPlayer.addEventListener('MediaCuePointsChange', (event) => {
+      collectedEvents.push([
+        'MediaCuePointsChange',
+        event.detail.cuePoints
+      ]);
+    });
     imaPlayer.addEventListener('ended', () => collectedEvents.push('ended'));
 
     imaPlayer.playAds(playAdsRequest);
@@ -236,14 +242,18 @@ describe("VAST-IMA-Player", () => {
       imaPlayer.destroy();
       expect(collectedEvents).toEqual([
         'MediaStart',
+        ['MediaCuePointsChange', [0, 5, 10, -1]],
+        ['MediaCuePointsChange', [5, 10, -1]],
         ['AdStarted', 2, 1, 'preroll-1', 0],
         ['AdComplete', 2, 1, 'preroll-1', 0],
         ['AdStarted', 2, 2, 'preroll-2', 0],
         ['AdComplete', 2, 2, 'preroll-2', 0],
         'MediaImpression',
+        ['MediaCuePointsChange', [5, -1]],
         ['AdStarted', 1, 1, 'midroll-2', 10],
         ['AdComplete', 1, 1, 'midroll-2', 10],
         'ended',
+        ['MediaCuePointsChange', [5]],
         ['AdStarted', 1, 1, 'postroll', -1],
         ['AdComplete', 1, 1, 'postroll', -1],
         'MediaStop'

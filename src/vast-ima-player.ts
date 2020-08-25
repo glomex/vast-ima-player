@@ -423,13 +423,13 @@ export class Player extends DelegatedEventTarget {
    * Only available after "AdMetadata" event when VMAP is passed in playAds.
    */
   get cuePoints() {
-    return this.#cuePoints;
+    return [...this.#cuePoints];
   }
 
   private _setCuePoints(cuePoints: number[]) {
-    this.#cuePoints = cuePoints;
+    this.#cuePoints = [...cuePoints];
     this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_CUE_POINTS_CHANGE, {
-      detail: { cuePoints: this.#cuePoints }
+      detail: { cuePoints: [...this.#cuePoints] }
     }));
   }
 
@@ -517,23 +517,25 @@ export class Player extends DelegatedEventTarget {
       if (this.#mediaElement.currentTime < IGNORE_UNTIL_CURRENT_TIME) {
         return;
       }
-      const cuePointsAfterJump = this.#cuePoints.filter((cuePoint) => {
-        return (cuePoint >= 0 && cuePoint < this.#customPlayhead.currentTime);
-      });
-      // Special handling when setAutoPlayAdBreaks = false
-      // in combination with non-linear ads.
-      // Discard previously started non-linear ad before IMA tries to play
-      // next linear ad. It won't play it otherwise.
-      if (this.#startAdCallback) {
-        if (cuePointsAfterJump.length > 0 && this.#currentAd && !this.#currentAd.isLinear()) {
-          this.#adsManager.stop();
+      if (this.#adsManager) {
+        const cuePointsAfterJump = this.#adsManager.getCuePoints().filter((cuePoint) => {
+          return (cuePoint >= 0 && cuePoint < this.#customPlayhead.currentTime);
+        });
+        // Special handling when setAutoPlayAdBreaks = false
+        // in combination with non-linear ads.
+        // Discard previously started non-linear ad before IMA tries to play
+        // next linear ad. It won't play it otherwise.
+        if (this.#startAdCallback) {
+          if (cuePointsAfterJump.length > 0 && this.#currentAd && !this.#currentAd.isLinear()) {
+            this.#adsManager.stop();
+          }
         }
+        const cuePointToRemove = cuePointsAfterJump.pop();
+        // in case the ad-break lead to an error it cannot be detected which
+        // ad break was affected because IMA could've preloaded an ad-break
+        // without emitting an event for it
+        this._adjustCuePoints(cuePointToRemove);
       }
-      const cuePointToRemove = cuePointsAfterJump.pop();
-      // in case the ad-break lead to an error it cannot be detected which
-      // ad break was affected because IMA could've preloaded an ad-break
-      // without emitting an event for it
-      this._adjustCuePoints(cuePointToRemove);
       if (!this.#mediaImpressionTriggered) {
         this.dispatchEvent(
           new CustomEvent(PlayerEvent.MEDIA_IMPRESSION)
