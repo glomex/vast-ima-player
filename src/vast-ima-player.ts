@@ -634,6 +634,12 @@ export class Player extends DelegatedEventTarget {
         this.#adsManager.setVolume(
           this.#mediaElement.muted ? 0 : this.#mediaElement.volume
         );
+        if (this.#currentAd.isLinear()) {
+          // pause requested is a signal that an ad got started
+          this.#customPlayhead.disable();
+          this.#adDuration = this.#currentAd.getDuration();
+          this.#adCurrentTime = 0;
+        }
         break;
       case AdEvent.Type.CONTENT_RESUME_REQUESTED:
         // synchronize volume state because IMA does not do that
