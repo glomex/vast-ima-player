@@ -756,9 +756,9 @@ export class Player extends DelegatedEventTarget {
       } else {
         // in case we won't add 4 pixels it triggers a VAST error
         // that there is not enough space to render the nonlinear ad
-        this.#adsManager.resize(ad.getWidth(), ad.getHeight() + 4, viewMode);
+        this.#adsManager.resize(ad.getWidth(), ad.getHeight() + 8, viewMode);
         this.#adElement.style.width = `${ad.getWidth()}px`;
-        this.#adElement.style.height = `${ad.getHeight() + 4}px`;
+        this.#adElement.style.height = `${ad.getHeight() + 8}px`;
       }
     }
   }
