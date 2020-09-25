@@ -310,7 +310,7 @@ describe("VAST-IMA-Player", () => {
       const { offsetWidth, offsetHeight } = adElement.firstChild;
       imaPlayer.destroy();
       expect([offsetWidth, offsetHeight]).toEqual([
-        480, 74
+        480, 78
       ]);
       done();
     });

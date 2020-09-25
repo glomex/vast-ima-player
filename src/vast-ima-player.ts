@@ -547,6 +547,7 @@ export class Player extends DelegatedEventTarget {
     if (event.type === 'ended') {
       if (this._isCustomPlaybackUsed()
         && this.#mediaElement.currentTime === this.#mediaElement.duration
+        && this.#cuePoints.indexOf(-1) > -1
       ) {
         /* Fixing a bug with postroll on iOS
          * when a postroll gets started via "contentComplete"
@@ -631,6 +632,13 @@ export class Player extends DelegatedEventTarget {
           this.#adCurrentTime = 0;
         }
         this.#adElement.style.display = '';
+        break;
+      case AdEvent.Type.ALL_ADS_COMPLETED:
+        if (this.#customPlaybackTimeAdjustedOnEnded) {
+          return;
+        }
+        this.reset();
+        this._playContent();
         break;
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
         this._resetAd();
