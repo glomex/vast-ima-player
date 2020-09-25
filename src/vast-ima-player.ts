@@ -173,6 +173,7 @@ export class Player extends DelegatedEventTarget {
   #currentAd: google.ima.Ad;
   #mediaStartTriggered: boolean = false;
   #mediaImpressionTriggered: boolean = false;
+  #customPlaybackTimeAdjustedOnEnded: boolean = false;
   #cuePoints: number[] = [];
   #adCurrentTime: number;
   #adDuration: number;
@@ -493,6 +494,7 @@ export class Player extends DelegatedEventTarget {
     this.#adsLoader.destroy();
     this.#resizeObserver.disconnect();
     this.#mediaImpressionTriggered = false;
+    this.#customPlaybackTimeAdjustedOnEnded = false;
     this.#mediaStartTriggered = false;
   }
 
@@ -543,6 +545,19 @@ export class Player extends DelegatedEventTarget {
       this.#mediaStartTriggered = true;
     }
     if (event.type === 'ended') {
+      if (this._isCustomPlaybackUsed()
+        && this.#mediaElement.currentTime === this.#mediaElement.duration
+      ) {
+        /* Fixing a bug with postroll on iOS
+         * when a postroll gets started via "contentComplete"
+         * and a single video-tag is used IMA does not reset
+         * back to the content after the postroll finished.
+         * Setting the time of the video tag a little shorter
+         * than the duration, so that the video-tag is not set to "ended".
+         */
+        this.#mediaElement.currentTime = this.#mediaElement.duration - 0.00001;
+        this.#customPlaybackTimeAdjustedOnEnded = true;
+      }
       this.#adsLoader.contentComplete();
       if (!this.#adsManager) {
         this._mediaStop();
@@ -617,10 +632,6 @@ export class Player extends DelegatedEventTarget {
         }
         this.#adElement.style.display = '';
         break;
-      case AdEvent.Type.ALL_ADS_COMPLETED:
-        this.reset();
-        this._playContent();
-        break;
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
         this._resetAd();
         this.#currentAd = event.getAd();
@@ -647,6 +658,13 @@ export class Player extends DelegatedEventTarget {
         } else {
           this.#mediaElement.muted = false;
           this.#mediaElement.volume = this.#adsManager.getVolume();
+        }
+        if (this.#customPlaybackTimeAdjustedOnEnded) {
+          // Fixing the issue on iOS and postroll where we have to
+          // adjust current time.
+          // We jump back to the content end, so that "ended" is assigned again.
+          this.#mediaElement.currentTime = this.#mediaElement.duration + 1;
+          this.#customPlaybackTimeAdjustedOnEnded = false;
         }
 
         if (this.#mediaElement.ended) {
@@ -713,10 +731,17 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  private _isCustomPlaybackUsed() {
+    const { settings } = this.#ima;
+    return settings.getDisableCustomPlaybackForIOS10Plus() === false
+      && !this.#adElement.querySelector('video');
+  }
+
   private _mediaStop() {
     setTimeout(() => {
       this.#mediaImpressionTriggered = false;
       this.#mediaStartTriggered = false;
+      this.#customPlaybackTimeAdjustedOnEnded = false;
       this.dispatchEvent(
         new CustomEvent(PlayerEvent.MEDIA_STOP)
       );
