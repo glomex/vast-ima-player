@@ -3,6 +3,7 @@ import formToObject from 'form-to-object';
 const { vastImaPlayer, google, bulmaSlider, document } = window;
 
 const LINEAR_AD_URL = 'https://glomex.github.io/vast-ima-player/linear-ad.xml';
+const NOT_FOUND_AD_URL = 'https://glomex.github.io/vast-ima-player/not-found.xml'
 const NONLINEAR_AD_URL = 'https://glomex.github.io/vast-ima-player/nonlinear-ad.xml';
 
 export function connectPageEvents() {
@@ -136,6 +137,7 @@ function addVastImaPlayer(settings) {
                 <select name="vastUrl">
                   <option selected value="${LINEAR_AD_URL}">Linear VAST 4s</option>
                   <option value="${NONLINEAR_AD_URL}">Nonlinear VAST</option>
+                  <option value="${NOT_FOUND_AD_URL}">Not Found URL</option>
                 </select>
               </span>
               </div>
@@ -282,10 +284,6 @@ function connectElementEvents(element, vastImaPlayer) {
         loadAndPlayVmap.classList.remove('is-loading');
         loadAndPlayVmap.innerHTML = 'Start VAST';
         currentVmapStart = start;
-      }, () => {
-        loadAndPlayVmap.classList.remove('is-loading');
-        loadAndPlayVmap.innerHTML = 'Load VAST';
-        vastImaPlayer.play();
       });
     } else {
       currentVmapStart();

@@ -153,7 +153,6 @@ type StartAd = {
 };
 
 type StartAdCallback = (startAd: StartAd) => void;
-type ResetStartAdCallback = () => void;
 
 /**
  * Convenience player wrapper for the Google IMA HTML5 SDK
@@ -179,7 +178,6 @@ export class Player extends DelegatedEventTarget {
   #adCurrentTime: number;
   #adDuration: number;
   #startAdCallback: StartAdCallback;
-  #resetStartAdCallback: ResetStartAdCallback;
 
   constructor(
     ima: ImaSdk,
@@ -302,12 +300,10 @@ export class Player extends DelegatedEventTarget {
    */
   loadAds(
     adsRequest: google.ima.AdsRequest,
-    startAdCallback: StartAdCallback,
-    resetStartAdCallback: ResetStartAdCallback
+    startAdCallback: StartAdCallback
   ) {
     this.#ima.settings.setAutoPlayAdBreaks(false);
     this._requestAds(adsRequest);
-    this.#resetStartAdCallback = resetStartAdCallback;
     this.#startAdCallback = startAdCallback;
   }
 
@@ -479,7 +475,6 @@ export class Player extends DelegatedEventTarget {
     this._resetAd();
     this.#cuePoints = [];
     this.#startAdCallback = undefined;
-    this.#resetStartAdCallback = undefined;
     if (this.#adsManager) {
       // see https://developers.google.com/interactive-media-ads/docs/sdks/html5/faq#8
       this.#adsManager.destroy();
@@ -608,6 +603,7 @@ export class Player extends DelegatedEventTarget {
             start: () => {
               if (this.#adsManager) {
                 this.#adsManager.start();
+                this.#startAdCallback = undefined;
               }
             }
           });
@@ -622,11 +618,9 @@ export class Player extends DelegatedEventTarget {
             start: () => {
               if (this.#adsManager) {
                 this.#adsManager.start();
-                if (this.#resetStartAdCallback) {
-                  this.#resetStartAdCallback();
-                  this.#startAdCallback = undefined;
-                  this.#resetStartAdCallback = undefined;
-                }
+                // we reset after we received the first
+                // start() after preroll
+                this.#startAdCallback = undefined;
               }
             }
           });
@@ -722,11 +716,13 @@ export class Player extends DelegatedEventTarget {
         if (this.#cuePoints.indexOf(0) === -1) {
           if (!this.#startAdCallback) {
             this._playContent();
-          }
-          if (this.#resetStartAdCallback) {
-            this.#resetStartAdCallback();
-            this.#startAdCallback = undefined;
-            this.#resetStartAdCallback = undefined;
+          } else {
+            this.#startAdCallback({
+              start: () => {
+                this._playContent();
+                this.#startAdCallback = undefined;
+              }
+            })
           }
         }
         break;
@@ -873,6 +869,15 @@ export class Player extends DelegatedEventTarget {
       detail: { error }
     }));
     this._resetAd();
-    this._playContent();
+    if (this.#startAdCallback) {
+      this.#startAdCallback({
+        start: () => {
+          this._playContent();
+          this.#startAdCallback = undefined;
+        }
+      })
+    } else {
+      this._playContent();
+    }
   }
 }
