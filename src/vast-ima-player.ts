@@ -595,7 +595,9 @@ export class Player extends DelegatedEventTarget {
           this.#startAdCallback({
             ad: event.getAd(),
             start: () => {
-              this.#adsManager.start();
+              if (this.#adsManager) {
+                this.#adsManager.start();
+              }
             }
           });
         }
@@ -619,7 +621,9 @@ export class Player extends DelegatedEventTarget {
         // on both video-tags. Calling setVolume with the
         // previously stored volume synchronizes volume with
         // the other video-tag
-        this.#adsManager.setVolume(this.#adsManager.getVolume());
+        if (ad.getAdPodInfo().getAdPosition() > 1) {
+          this.#adsManager.setVolume(this.#adsManager.getVolume());
+        }
         this.#adElement.classList.remove('nonlinear');
         this._resizeAdsManager();
         // single or non-linear ads
