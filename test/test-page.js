@@ -151,6 +151,8 @@ function addVastImaPlayer(settings) {
                 <span class="select">
                 <select name="vmap">
                   <option selected value="[1, 1, 1, 1, true]">Ad-Pods: Pre-, Mid- and Postrolls</option>
+                  <option value="[0, 0, 0, 1, true]">Ad-Pods: Only Postroll</option>
+                  <option value="[0, 0, 0, 0, true]">No Ad Breaks</option>
                   <option value="[2, 2, 2, 2, true]">Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
                   <option value="[2, 2, 2, 2, false]">No Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
                 </select>
@@ -280,6 +282,9 @@ function connectElementEvents(element, vastImaPlayer) {
         loadAndPlayVmap.classList.remove('is-loading');
         loadAndPlayVmap.innerHTML = 'Start VAST';
         currentVmapStart = start;
+      }, () => {
+        loadAndPlayVmap.classList.remove('is-loading');
+        loadAndPlayVmap.innerHTML = 'Load VAST';
       });
     } else {
       currentVmapStart();

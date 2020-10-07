@@ -153,6 +153,7 @@ type StartAd = {
 };
 
 type StartAdCallback = (startAd: StartAd) => void;
+type ResetStartAdCallback = () => void;
 
 /**
  * Convenience player wrapper for the Google IMA HTML5 SDK
@@ -178,6 +179,7 @@ export class Player extends DelegatedEventTarget {
   #adCurrentTime: number;
   #adDuration: number;
   #startAdCallback: StartAdCallback;
+  #resetStartAdCallback: ResetStartAdCallback;
 
   constructor(
     ima: ImaSdk,
@@ -283,22 +285,9 @@ export class Player extends DelegatedEventTarget {
    * - With a single VMAP at the beginning
    */
   playAds(adsRequest: google.ima.AdsRequest) {
-    // in case of replay we go back to start
-    if (this.#mediaElement.ended) {
-      this.#customPlayhead.reset();
-      this.#mediaElement.currentTime = 0;
-    }
-    this.reset();
-    this.activate();
-
     this.#ima.settings.setAutoPlayAdBreaks(true);
-
-    adsRequest.linearAdSlotWidth = this.#width;
-    adsRequest.linearAdSlotHeight = this.#height;
-    adsRequest.nonLinearAdSlotWidth = this.#width;
-    adsRequest.nonLinearAdSlotHeight = this.#height;
-
-    this.#adsLoader.requestAds(adsRequest);
+    this._requestAds(adsRequest);
+    this.activate();
   }
 
   /**
@@ -311,11 +300,32 @@ export class Player extends DelegatedEventTarget {
    * VAST ad or starts the VMAP ad break. If "start" method is not called
    * it won't play the ad.
    */
-  loadAds(adsRequest: google.ima.AdsRequest, startAdCallback: StartAdCallback) {
-    this.playAds(adsRequest);
-    this.#startAdCallback = startAdCallback;
-    // overwrites autoPlayAdBreaks settings of "playAds"
+  loadAds(
+    adsRequest: google.ima.AdsRequest,
+    startAdCallback: StartAdCallback,
+    resetStartAdCallback: ResetStartAdCallback
+  ) {
     this.#ima.settings.setAutoPlayAdBreaks(false);
+    this._requestAds(adsRequest);
+    this.#resetStartAdCallback = resetStartAdCallback;
+    this.#startAdCallback = startAdCallback;
+  }
+
+  private _requestAds(adsRequest: google.ima.AdsRequest) {
+    this.#adDisplayContainer.initialize();
+    // in case of replay we go back to start
+    if (this.#mediaElement.ended) {
+      this.#customPlayhead.reset();
+      this.#mediaElement.currentTime = 0;
+    }
+    this.reset();
+
+    adsRequest.linearAdSlotWidth = this.#width;
+    adsRequest.linearAdSlotHeight = this.#height;
+    adsRequest.nonLinearAdSlotWidth = this.#width;
+    adsRequest.nonLinearAdSlotHeight = this.#height;
+
+    this.#adsLoader.requestAds(adsRequest);
   }
 
   skipAd() {
@@ -469,6 +479,7 @@ export class Player extends DelegatedEventTarget {
     this._resetAd();
     this.#cuePoints = [];
     this.#startAdCallback = undefined;
+    this.#resetStartAdCallback = undefined;
     if (this.#adsManager) {
       // see https://developers.google.com/interactive-media-ads/docs/sdks/html5/faq#8
       this.#adsManager.destroy();
@@ -611,9 +622,16 @@ export class Player extends DelegatedEventTarget {
             start: () => {
               if (this.#adsManager) {
                 this.#adsManager.start();
+                if (this.#resetStartAdCallback) {
+                  this.#resetStartAdCallback();
+                  this.#startAdCallback = undefined;
+                  this.#resetStartAdCallback = undefined;
+                }
               }
             }
           });
+        } else {
+          this.#adsManager.start();
         }
         break;
       case AdEvent.Type.STARTED:
@@ -701,6 +719,14 @@ export class Player extends DelegatedEventTarget {
         break;
       case AdEvent.Type.AD_METADATA:
         this._setCuePoints(this.#adsManager.getCuePoints());
+        if (this.#cuePoints.indexOf(0) === -1) {
+          if (this.#resetStartAdCallback) {
+            this.#resetStartAdCallback();
+            this.#startAdCallback = undefined;
+            this.#resetStartAdCallback = undefined;
+          }
+          this._playContent();
+        }
         break;
       case AdEvent.Type.LOG:
         // this gets triggered when individual positions of VMAP fail
