@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+    <script src="../dist/vast-ima-player.umd.js"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script>
+    <link rel="stylesheet" href="bulma.min.css">
+    <link rel="stylesheet" href="bulma-slider.min.css">
+    <script src="bulma-slider.min.js"></script>
+    <title>VAST-IMA-Player Test-Page</title>
+    <style>
+      .playerContainer {
+        position: relative;
+      }
+
+      .playerContainer .adContainer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        overflow: hidden;
+      }
+
+      .adContainer.nonlinear {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 4.5em;
+        margin: 0 auto;
+      }
+
+      .adContainer.nonlinear > div {
+        bottom: 15%;
+      }
+
+      .playerContainer video, .playerContainer .adContainer {
+        width: 100%;
+        overflow: hidden;
+      }
+    </style>
+</head>
+<body>
+  <nav class="navbar is-light" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://glomex.github.io/vast-ima-player">
+        <img src="https://glomex.github.io/vast-ima-player/glomex-logo.png" height="28">
+      </a>
+
+      <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div id="navbarBasicExample" class="navbar-menu">
+      <div class="navbar-start">
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">
+            Add VAST-IMA-Player
+          </a>
+          <form id="addPlayerForm" class="navbar-dropdown" style="padding: 1em;">
+            <div class="field">
+              <label class="checkbox">
+                <input name="muted" type="checkbox" checked>
+                Muted
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
+                <input name="enablePreloading" type="checkbox" checked>
+                Enable Preloading
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
+                <input name="renderAdUiElements" type="checkbox" checked>
+                Ad UI Elements
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
+                <input name="useStyledNonLinearAds" type="checkbox">
+                Style NonLinear Ads
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
+                <input name="useStyledLinearAds" type="checkbox">
+                Style Linear Ads
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
+                <input name="autoAlign" type="checkbox">
+                Auto Align
+              </label>
+            </div>
+            <div class="field">
+              <label class="label">Load Video Timeout</label>
+              <div class="control">
+                <input name="loadVideoTimeout" class="input" type="text" placeholder="10000" value="10000">
+              </div>
+            </div>
+            <hr class="navbar-divider">
+            <div class="control">
+              <button type="submit" class="button is-info">
+                Add Player
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">
+            Global IMA Settings
+          </a>
+          <div class="navbar-dropdown" style="padding: 1em;">
+            <div class="field">
+              <label class="label">VPAID-Mode</label>
+              <div class="control">
+                <span class="select">
+                <select id="vpaidMode">
+                  <option selected>INSECURE</option>
+                  <option>ENABLED</option>
+                  <option>DISABLED</option>
+                </select>
+              </span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Number of Redirects</label>
+              <div class="control">
+                <input id="numRedirects" class="input" type="text" placeholder="10" value="10">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Locale</label>
+              <div class="control">
+                <span class="select">
+                <select id="locale">
+                  <option selected>en</option>
+                  <option>de</option>
+                  <option>fr</option>
+                  <option>el</option>
+                </select>
+              </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <script src="test-page.bundle.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      testPage.connectPageEvents();
+    });
+  </script>
+</body>
+</html>

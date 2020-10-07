@@ -16,6 +16,7 @@
     "start": "npm-run-all --parallel start:*",
     "start:serve": "serve",
     "start:bundle": "microbundle watch",
+    "start:test-page": "rollup -c test/rollup.config.js --watch",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "test": "karma start karma.conf.js --single-run"
   },
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@alugha/ima": "^1.2.0",
     "@ungap/custom-event": "^0.3.0",
+    "form-to-object": "^6.0.0",
     "jasmine": "^3.5.0",
     "karma": "^5.0.9",
     "karma-chrome-launcher": "^3.1.0",
