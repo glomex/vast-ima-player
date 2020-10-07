@@ -665,13 +665,17 @@ export class Player extends DelegatedEventTarget {
         this.#adCurrentTime = 0;
         break;
       case AdEvent.Type.CONTENT_RESUME_REQUESTED:
-        // synchronize volume state because IMA does not do that
-        const adVolume = this.#adsManager.getVolume();
-        if (adVolume === 0) {
-          this.#mediaElement.muted = true;
-        } else {
-          this.#mediaElement.muted = false;
-          this.#mediaElement.volume = this.#adsManager.getVolume();
+        const adPlayedPreviously = Boolean(this.#currentAd);
+        // synchronize ad volume state back to content
+        // because IMA does not do that
+        if (adPlayedPreviously) {
+          const adVolume = this.#adsManager.getVolume();
+          if (adVolume === 0) {
+            this.#mediaElement.muted = true;
+          } else {
+            this.#mediaElement.muted = false;
+            this.#mediaElement.volume = this.#adsManager.getVolume();
+          }
         }
         if (this.#customPlaybackTimeAdjustedOnEnded) {
           // Fixing the issue on iOS and postroll where we have to
@@ -688,7 +692,12 @@ export class Player extends DelegatedEventTarget {
         } else {
           this._resetAd();
         }
-        this._playContent();
+        // only start playback when there previously was an ad
+        // CONTENT_RESUME_REQUESTED also gets triggered when "start"
+        // is not called on preroll when "loadAds" is used
+        if (adPlayedPreviously) {
+          this._playContent();
+        }
         break;
       case AdEvent.Type.AD_METADATA:
         this._setCuePoints(this.#adsManager.getCuePoints());
