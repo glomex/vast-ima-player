@@ -720,12 +720,14 @@ export class Player extends DelegatedEventTarget {
       case AdEvent.Type.AD_METADATA:
         this._setCuePoints(this.#adsManager.getCuePoints());
         if (this.#cuePoints.indexOf(0) === -1) {
+          if (!this.#startAdCallback) {
+            this._playContent();
+          }
           if (this.#resetStartAdCallback) {
             this.#resetStartAdCallback();
             this.#startAdCallback = undefined;
             this.#resetStartAdCallback = undefined;
           }
-          this._playContent();
         }
         break;
       case AdEvent.Type.LOG:

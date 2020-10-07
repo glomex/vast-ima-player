@@ -285,6 +285,7 @@ function connectElementEvents(element, vastImaPlayer) {
       }, () => {
         loadAndPlayVmap.classList.remove('is-loading');
         loadAndPlayVmap.innerHTML = 'Load VAST';
+        vastImaPlayer.play();
       });
     } else {
       currentVmapStart();
