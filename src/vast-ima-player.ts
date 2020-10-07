@@ -609,7 +609,9 @@ export class Player extends DelegatedEventTarget {
           this.#startAdCallback({
             adBreakTime: event.getAdData().adBreakTime,
             start: () => {
-              this.#adsManager.start();
+              if (this.#adsManager) {
+                this.#adsManager.start();
+              }
             }
           });
         }

@@ -2,6 +2,9 @@ import formToObject from 'form-to-object';
 
 const { vastImaPlayer, google, bulmaSlider, document } = window;
 
+const LINEAR_AD_URL = 'https://glomex.github.io/vast-ima-player/linear-ad.xml';
+const NONLINEAR_AD_URL = 'https://glomex.github.io/vast-ima-player/nonlinear-ad.xml';
+
 export function connectPageEvents() {
   // Get all "navbar-burger" elements
   var navBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
@@ -120,23 +123,44 @@ function addVastImaPlayer(settings) {
         </div>
       </div>
       <div class="tile is-child box">
+        <div class="message-header">
+          Ad Playback
+          <button class="delete is-large remove-button">Delete</button>
+        </div>
         <nav class="panel">
-          <p class="panel-heading">
-            Ad Settings
-          </p>
           <div class="control" style="padding: 1em;">
             <div class="field">
               <label class="label">VAST-URL</label>
               <div class="control">
                 <span class="select">
                 <select name="vastUrl">
-                  <option selected value="https://glomex.github.io/vast-ima-player/linear-ad.xml">Linear VAST 4s</option>
-                  <option value="https://glomex.github.io/vast-ima-player/nonlinear-ad.xml">Nonlinear VAST</option>
+                  <option selected value="${LINEAR_AD_URL}">Linear VAST 4s</option>
+                  <option value="${NONLINEAR_AD_URL}">Nonlinear VAST</option>
                 </select>
               </span>
               </div>
             </div>
-            <button class="button is-info" name="playVast">Play VAST</button>
+            <div class="buttons">
+              <button class="button is-info" name="playVast">Play VAST</button>
+              <button class="button is-info" name="loadAndPlayVast">Load VAST</button>
+            </div>
+            <hr>
+            <div class="field">
+              <label class="label">VMAP</label>
+              <div class="control">
+                <span class="select">
+                <select name="vmap">
+                  <option selected value="[1, 1, 1, 1, true]">Ad-Pods: Pre-, Mid- and Postrolls</option>
+                  <option value="[2, 2, 2, 2, true]">Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
+                  <option value="[2, 2, 2, 2, false]">No Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
+                </select>
+              </span>
+              </div>
+            </div>
+            <div class="buttons">
+              <button class="button is-info" name="playVmap">Play VMAP</button>
+              <button class="button is-info" name="loadAndPlayVmap">Load VMAP</button>
+            </div>
           </div>
         </nav>
       </div>
@@ -160,8 +184,6 @@ function addVastImaPlayer(settings) {
 
 function connectElementEvents(element, vastImaPlayer) {
   const video = element.querySelector('video');
-  const vastUrlSelect = element.querySelector('[name=vastUrl]');
-  const playVastButton = element.querySelector('[name=playVast]');
 
   element.querySelector('.play-button').addEventListener('click', () => {
     vastImaPlayer.play();
@@ -200,11 +222,78 @@ function connectElementEvents(element, vastImaPlayer) {
     adjustMutedUi();
   });
 
+  const vastUrlSelect = element.querySelector('[name=vastUrl]');
+  const playVastButton = element.querySelector('[name=playVast]');
   playVastButton.addEventListener('click', () => {
     const playAdsRequest = new google.ima.AdsRequest();
     playAdsRequest.adTagUrl = vastUrlSelect.value;
-    // will start the ad muted
     vastImaPlayer.playAds(playAdsRequest);
+  });
+
+  const loadAndPlayVast = element.querySelector('[name=loadAndPlayVast]');
+  let currentVastStart = () => {};
+  loadAndPlayVast.addEventListener('click', () => {
+    if (loadAndPlayVast.innerHTML === 'Load VAST') {
+      loadAndPlayVast.classList.add('is-loading');
+      const playAdsRequest = new google.ima.AdsRequest();
+      playAdsRequest.adTagUrl = vastUrlSelect.value;
+      vastImaPlayer.loadAds(playAdsRequest, ({ start }) => {
+        loadAndPlayVast.classList.remove('is-loading');
+        loadAndPlayVast.innerHTML = 'Start VAST';
+        currentVastStart = start;
+      });
+    } else {
+      currentVastStart();
+      loadAndPlayVast.innerHTML = 'Load VAST';
+    }
+  });
+
+  const vmapSelect = element.querySelector('[name=vmap]');
+  const playVmapButton = element.querySelector('[name=playVmap]');
+  playVmapButton.addEventListener('click', () => {
+    const playAdsRequest = new google.ima.AdsRequest();
+    const selectedValue = JSON.parse(vmapSelect.value);
+    playAdsRequest.adsResponse = constructVmap({
+      prerollCount: selectedValue[0],
+      midroll1Count: selectedValue[1],
+      midroll2Count: selectedValue[2],
+      postrollCount: selectedValue[3],
+      useAdPods: Boolean(selectedValue[4])
+    });
+    vastImaPlayer.playAds(playAdsRequest);
+  });
+  const loadAndPlayVmap = element.querySelector('[name=loadAndPlayVmap]');
+  let currentVmapStart = () => {};
+  loadAndPlayVmap.addEventListener('click', () => {
+    if (loadAndPlayVmap.innerHTML === 'Load VMAP') {
+      loadAndPlayVmap.classList.add('is-loading');
+      const playAdsRequest = new google.ima.AdsRequest();
+      const selectedValue = JSON.parse(vmapSelect.value);
+      playAdsRequest.adsResponse = constructVmap({
+        prerollCount: selectedValue[0],
+        midroll1Count: selectedValue[1],
+        midroll2Count: selectedValue[2],
+        postrollCount: selectedValue[3],
+        useAdPods: Boolean(selectedValue[4])
+      });
+      vastImaPlayer.loadAds(playAdsRequest, ({ start }) => {
+        loadAndPlayVmap.classList.remove('is-loading');
+        loadAndPlayVmap.innerHTML = 'Start VAST';
+        currentVmapStart = start;
+      });
+    } else {
+      currentVmapStart();
+      loadAndPlayVmap.innerHTML = 'Load VMAP';
+    }
+  });
+  vastImaPlayer.addEventListener('MediaStop', () => {
+    loadAndPlayVmap.innerHTML = 'Load VMAP';
+  });
+
+  const removeButton = element.querySelector('.remove-button');
+  removeButton.addEventListener('click', () => {
+    vastImaPlayer.destroy();
+    element.parentNode.removeChild(element);
   });
 }
 
@@ -212,6 +301,67 @@ function updateExternalPlayerControls(element, vastImaPlayer) {
   const currentVolume = String(vastImaPlayer.volume * 100 || 0);
   element.querySelector('.volume-slider input').value = currentVolume;
   element.querySelector('.volume-slider output').innerHTML = currentVolume;
+}
+
+function constructVmap({
+  prerollCount,
+  midroll1Count,
+  midroll2Count,
+  postrollCount,
+  useAdPods = true
+}) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+  <VMAP xmlns:vmap="http://www.iab.net/vmap-1.0" version="1.0">
+    ${ prerollCount ? createAdBreaks('start', prerollCount, useAdPods) : '' }
+    ${ midroll1Count ? createAdBreaks('00:00:10.000', midroll1Count, useAdPods) : '' }
+    ${ midroll2Count ? createAdBreaks('00:00:20.000', midroll2Count, useAdPods) : '' }
+    ${ postrollCount ? createAdBreaks('end', postrollCount, useAdPods) : '' }
+  </VMAP>`
+}
+
+function createAdBreaks(position, count, useAdPods) {
+  return useAdPods
+    ? createVmapAdBreakAsAdPod(position, count)
+    : createIndividualVmapAdBreaks(position, count);
+}
+
+function createIndividualVmapAdBreaks(position, count) {
+  return [...Array(count)].map(() => {
+    return `<vmap:AdBreak timeOffset="${position}" breakType="linear">
+    <vmap:AdSource allowMultipleAds="true" followRedirects="false">
+      <vmap:VASTAdData>
+        <VAST xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vast.xsd" version="3.0">
+          <Ad>
+          <Wrapper>
+            <VASTAdTagURI>
+              <![CDATA[${LINEAR_AD_URL}]]>
+            </VASTAdTagURI>
+          </Wrapper>
+        </Ad>
+        </VAST>
+      </vmap:VASTAdData>
+    </vmap:AdSource>
+  </vmap:AdBreak>`});
+}
+
+function createVmapAdBreakAsAdPod(position, count) {
+  return `<vmap:AdBreak timeOffset="${position}" breakType="linear">
+    <vmap:AdSource allowMultipleAds="true" followRedirects="false">
+      <vmap:VASTAdData>
+        <VAST xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vast.xsd" version="3.0">
+          ${ [...Array(count)].map((item, index) => {
+            return `<Ad sequence="${index+1}">
+              <Wrapper>
+                <VASTAdTagURI>
+                  <![CDATA[${LINEAR_AD_URL}]]>
+                </VASTAdTagURI>
+              </Wrapper>
+            </Ad>`
+          })}
+        </VAST>
+      </vmap:VASTAdData>
+    </vmap:AdSource>
+  </vmap:AdBreak>`;
 }
 
 function convertFormToObject(form) {
