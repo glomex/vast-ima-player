@@ -602,7 +602,11 @@ export class Player extends DelegatedEventTarget {
             ad: event.getAd(),
             start: () => {
               if (this.#adsManager) {
-                this.#adsManager.start();
+                try {
+                  this.#adsManager.start();
+                } catch(error) {
+                  this._onAdError(error);
+                }
                 this.#startAdCallback = undefined;
               }
             }
@@ -858,13 +862,22 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  private _createPlayerErrorFromImaError(error) {
+    const playerError = new PlayerError(error.getMessage());
+    playerError.type = error.getType();
+    playerError.errorCode = error.getErrorCode();
+    playerError.vastErrorCode = error.getVastErrorCode && error.getVastErrorCode();
+    playerError.innerError = error.getInnerError();
+    return playerError;
+  }
+
   private _onAdError(event: google.ima.AdErrorEvent) {
-    const thrownError = event.getError();
-    const error = new PlayerError(thrownError.getMessage());
-    error.type = thrownError.getType();
-    error.errorCode = thrownError.getErrorCode();
-    error.vastErrorCode = thrownError.getVastErrorCode();
-    error.innerError = thrownError.getInnerError();
+    let error;
+    if (event && event.getError) {
+      error = this._createPlayerErrorFromImaError(event.getError());
+    } else {
+      error = this._createPlayerErrorFromImaError(event);
+    }
     this.dispatchEvent(new CustomEvent(PlayerEvent.AD_ERROR, {
       detail: { error }
     }));
