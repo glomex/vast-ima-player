@@ -186,6 +186,11 @@ function addVastImaPlayer(settings) {
                 <option value="[0, 0, 0, 0, true]">No Ad Breaks</option>
                 <option value="[2, 2, 2, 2, true]">Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
                 <option value="[2, 2, 2, 2, false]">No Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
+                <option value="[1, 1, 1, 1, false, true]">Ad-Waterfall: Pre- Mid- and Postrolls</option>
+                <option value="[2, 0, 0, 0, false, true]">Ad-Waterfall 2x: Only Preroll</option>
+                <option value="[1, 0, 0, 1, false, false, true]">Nonlinear Preroll and Linear Postroll</option>
+                <option value="[1, 0, 0, 0, false, false, true]">Nonlinear Preroll only</option>
+                <option value="[1, 0, 1, 0, false, false, true]">Nonlinear Preroll and Linear Midroll-2</option>
               </select>
             </span>
           </div>
@@ -358,7 +363,9 @@ function connectElementEvents(element, vastImaPlayer) {
       midroll1Count: selectedValue[1],
       midroll2Count: selectedValue[2],
       postrollCount: selectedValue[3],
-      useAdPods: Boolean(selectedValue[4])
+      useAdPods: Boolean(selectedValue[4]),
+      useAdWaterfall: Boolean(selectedValue[5]),
+      placeNonlinearAdOnPreoll: Boolean(selectedValue[6])
     });
     element.querySelector('[name=adsResponseString]').value = playAdsRequest.adsResponse;
     return playAdsRequest;
@@ -490,57 +497,142 @@ function constructVmap({
   midroll1Count,
   midroll2Count,
   postrollCount,
-  useAdPods = true
+  useAdPods = true,
+  useAdWaterfall = true,
+  placeNonlinearAdOnPreoll = false
 }) {
   return `<?xml version="1.0" encoding="UTF-8"?>
   <VMAP xmlns:vmap="http://www.iab.net/vmap-1.0" version="1.0">
-    ${ prerollCount ? createAdBreaks('start', prerollCount, useAdPods) : '' }
-    ${ midroll1Count ? createAdBreaks('00:00:10.000', midroll1Count, useAdPods) : '' }
-    ${ midroll2Count ? createAdBreaks('00:00:20.000', midroll2Count, useAdPods) : '' }
-    ${ postrollCount ? createAdBreaks('end', postrollCount, useAdPods) : '' }
+    ${ prerollCount ? createAdBreaks('start', prerollCount, useAdPods, useAdWaterfall, placeNonlinearAdOnPreoll) : '' }
+    ${ midroll1Count ? createAdBreaks('00:00:10.000', midroll1Count, useAdPods, useAdWaterfall, false) : '' }
+    ${ midroll2Count ? createAdBreaks('00:00:20.000', midroll2Count, useAdPods, useAdWaterfall, false) : '' }
+    ${ postrollCount ? createAdBreaks('end', postrollCount, useAdPods, useAdWaterfall, false) : '' }
   </VMAP>`
 }
 
-function createAdBreaks(position, count, useAdPods) {
+function createAdBreaks(position, count, useAdPods, useAdWaterfall, useNonlinearAd) {
+  if (useNonlinearAd) {
+    return useAdPods
+      ? createVmapAdBreakAsAdPod(position, count, createNonlinearAd)
+      : createIndividualVmapAdBreaks(position, count, createNonlinearAd);
+  }
+  if (useAdWaterfall) {
+    return createIndividualVmapAdBreaks(position, count, createAdWaterfall);
+  }
   return useAdPods
-    ? createVmapAdBreakAsAdPod(position, count)
-    : createIndividualVmapAdBreaks(position, count);
+    ? createVmapAdBreakAsAdPod(position, count, createLinearAd)
+    : createIndividualVmapAdBreaks(position, count, createLinearAd);
 }
 
-function createIndividualVmapAdBreaks(position, count) {
+
+function createVast(createAd, count = 1, withSequence = false) {
+  return `<VAST xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vast.xsd" version="3.0">
+    ${ [...Array(count)].map((item, index) => {
+      return createAd(withSequence ? index+1 : undefined);
+    }).join('')}
+  </VAST>`
+}
+
+function createLinearAd(sequence) {
+  return `<Ad${ sequence != null ? ` sequence="${sequence}"` : ''}>
+    <Wrapper>
+      <VASTAdTagURI>
+        <![CDATA[${LINEAR_AD_URL}]]>
+      </VASTAdTagURI>
+    </Wrapper>
+  </Ad>`;
+}
+
+function createNonlinearAd(sequence) {
+  return `<Ad${ sequence != null ? ` sequence="${sequence}"` : ''}>
+    <Wrapper>
+      <VASTAdTagURI>
+        <![CDATA[${NONLINEAR_AD_URL}]]>
+      </VASTAdTagURI>
+    </Wrapper>
+  </Ad>`;
+}
+
+function createAdWaterfall() {
+  return `<Ad>
+    <Wrapper>
+      <Error>https://error?not-found-ad-url</Error>
+      <VASTAdTagURI>
+        <![CDATA[${NOT_FOUND_AD_URL}]]>
+      </VASTAdTagURI>
+      <Extensions>
+        <Extension type="waterfall" fallback_index="1"/>
+      </Extensions>
+    </Wrapper>
+  </Ad>
+  <Ad>
+    <InLine>
+      <Error>https://error?broken-mediafile</Error>
+      <Creatives>
+        <Creative>
+          <Linear>
+            <Duration><![CDATA[ 00:00:00 ]]></Duration>
+            <MediaFiles>
+              <MediaFile delivery="progressive" bitrate="400" width="0" height="0" type="video/mp4">
+                <![CDATA[ https://broken-mediafile ]]>
+              </MediaFile>
+            </MediaFiles>
+          </Linear>
+        </Creative>
+      </Creatives>
+      <Extensions>
+        <Extension type="waterfall" fallback_index="1"/>
+      </Extensions>
+    </InLine>
+  </Ad>
+  <Ad>
+    <InLine>
+      <Error>https://error?timeout-mediafile</Error>
+      <Creatives>
+        <Creative>
+          <Linear>
+            <Duration><![CDATA[ 00:00:00 ]]></Duration>
+            <MediaFiles>
+              <MediaFile delivery="progressive" bitrate="400" width="0" height="0" type="video/mp4">
+                <![CDATA[ http://10.255.255.1/will_timeout.mp4 ]]>
+              </MediaFile>
+            </MediaFiles>
+          </Linear>
+        </Creative>
+      </Creatives>
+      <Extensions>
+        <Extension type="waterfall" fallback_index="1"/>
+      </Extensions>
+    </InLine>
+  </Ad>
+  <Ad>
+    <Wrapper>
+      <VASTAdTagURI>
+        <![CDATA[${LINEAR_AD_URL}]]>
+      </VASTAdTagURI>
+      <Extensions>
+        <Extension type="waterfall" fallback_index="1"/>
+      </Extensions>
+    </Wrapper>
+  </Ad>`;
+}
+
+function createIndividualVmapAdBreaks(position, count, createAd) {
   return [...Array(count)].map(() => {
     return `<vmap:AdBreak timeOffset="${position}" breakType="linear">
     <vmap:AdSource allowMultipleAds="true" followRedirects="false">
       <vmap:VASTAdData>
-        <VAST xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vast.xsd" version="3.0">
-          <Ad>
-          <Wrapper>
-            <VASTAdTagURI>
-              <![CDATA[${LINEAR_AD_URL}]]>
-            </VASTAdTagURI>
-          </Wrapper>
-        </Ad>
-        </VAST>
+        ${ createVast(createAd) }
       </vmap:VASTAdData>
     </vmap:AdSource>
-  </vmap:AdBreak>`});
+  </vmap:AdBreak>`}).join('');
 }
 
-function createVmapAdBreakAsAdPod(position, count) {
+function createVmapAdBreakAsAdPod(position, count, createAd) {
   return `<vmap:AdBreak timeOffset="${position}" breakType="linear">
     <vmap:AdSource allowMultipleAds="true" followRedirects="false">
       <vmap:VASTAdData>
-        <VAST xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vast.xsd" version="3.0">
-          ${ [...Array(count)].map((item, index) => {
-            return `<Ad sequence="${index+1}">
-              <Wrapper>
-                <VASTAdTagURI>
-                  <![CDATA[${LINEAR_AD_URL}]]>
-                </VASTAdTagURI>
-              </Wrapper>
-            </Ad>`
-          })}
-        </VAST>
+        ${ createVast(createAd, count, true) }
       </vmap:VASTAdData>
     </vmap:AdSource>
   </vmap:AdBreak>`;
