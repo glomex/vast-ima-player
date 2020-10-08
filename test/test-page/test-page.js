@@ -93,64 +93,77 @@ let instanceNumber = 0;
 function addVastImaPlayer(settings) {
   instanceNumber += 1;
   const domString = `<div class="container">
-    <div class="tile is-ancestor is-parent">
-      <div class="tile is-8 is-child box">
-        <div class="playerContainer">
-          <video ${settings.muted ? 'muted ' : ''}controls playsinline poster="https://glomex.github.io/vast-ima-player/big-buck-bunny.png" preload="none">
-            <source type="video/mp4" src="https://glomex.github.io/vast-ima-player/big-buck-bunny.mp4">
-          </video>
-          <div class="adContainer"></div>
-        </div>
-        <div class="buttons">
-          <button class="button play-button">
-            <span title="Play" class="icon is-small">
-              <i class="fas fa-play"></i>
-            </span>
-          </button>
-          <button class="button pause-button">
-            <span title="Pause" class="icon is-small">
-              <i class="fas fa-pause"></i>
-            </span>
-          </button>
-          <button class="button mute-toggle-button">
-            <span title="${settings.muted ? 'Unmute' : 'Mute'}" class="icon is-small">
-              <i class="fas ${settings.muted ? 'fa-microphone-slash' : 'fa-microphone'}"></i>
-            </span>
-          </button>
-          <div title="Adjust Volume" class="button volume-slider">
-            <input id="sliderWithValue${instanceNumber}" class="slider has-output" min="0" max="100" value="50" step="1" type="range">
-            <output for="sliderWithValue${instanceNumber}">50</output>
-          </div>
+  <div class="tile is-ancestor is-parent">
+    <div class="tile is-8 is-child box">
+      <div class="playerContainer">
+        <video ${settings.muted ? 'muted ' : '' }controls playsinline
+          poster="https://glomex.github.io/vast-ima-player/big-buck-bunny.png" preload="none">
+          <source type="video/mp4" src="https://glomex.github.io/vast-ima-player/big-buck-bunny.mp4">
+        </video>
+        <div class="adContainer"></div>
+      </div>
+      <div class="buttons">
+        <button class="button play-button">
+          <span title="Play" class="icon is-small">
+            <i class="fas fa-play"></i>
+          </span>
+        </button>
+        <button class="button pause-button">
+          <span title="Pause" class="icon is-small">
+            <i class="fas fa-pause"></i>
+          </span>
+        </button>
+        <button class="button mute-toggle-button">
+          <span title="${settings.muted ? 'Unmute' : 'Mute'}" class="icon is-small">
+            <i class="fas ${settings.muted ? 'fa-microphone-slash' : 'fa-microphone'}"></i>
+          </span>
+        </button>
+        <div title="Adjust Volume" class="button volume-slider">
+          <input id="sliderWithValue${instanceNumber}" class="slider has-output" min="0" max="100" value="50" step="1"
+            type="range">
+          <output for="sliderWithValue${instanceNumber}">50</output>
         </div>
       </div>
-      <div class="tile is-child box">
-        <div class="message-header">
-          Ad Playback
-          <button class="delete is-large remove-button">Delete</button>
-        </div>
-        <nav class="panel">
-          <div class="control" style="padding: 1em;">
-            <div class="field">
-              <label class="label">VAST-URL</label>
-              <div class="control">
-                <span class="select">
+    </div>
+    <div class="tile is-child box">
+      <div class="tabs is-boxed">
+        <ul>
+          <li class="is-active ad-playback-button">
+            <a>
+              <span>Ad Playback</span>
+            </a>
+          </li>
+          <li class="player-log-button">
+            <a>
+              <span>Player Log</span>
+            </a>
+          </li>
+        </ul>
+        <button style="float:right;" class="delete is-large remove-button">Delete</button>
+      </div>
+      <div class="ad-playback-screen">
+        <div>
+          <div class="field">
+            <label class="label">VAST-URL</label>
+            <div class="control">
+              <span class="select">
                 <select name="vastUrl">
                   <option selected value="${LINEAR_AD_URL}">Linear VAST 4s</option>
                   <option value="${NONLINEAR_AD_URL}">Nonlinear VAST</option>
                   <option value="${NOT_FOUND_AD_URL}">Not Found URL</option>
                 </select>
               </span>
-              </div>
             </div>
-            <div class="buttons">
-              <button class="button is-info" name="playVast">Play VAST</button>
-              <button class="button is-info" name="loadAndPlayVast">Load VAST</button>
-            </div>
-            <hr>
-            <div class="field">
-              <label class="label">VMAP</label>
-              <div class="control">
-                <span class="select">
+          </div>
+          <div class="buttons">
+            <button class="button is-info" name="playVast">Play VAST</button>
+            <button class="button is-info" name="loadAndPlayVast">Load VAST</button>
+          </div>
+          <hr>
+          <div class="field">
+            <label class="label">VMAP</label>
+            <div class="control">
+              <span class="select">
                 <select name="vmap">
                   <option selected value="[1, 1, 1, 1, true]">Ad-Pods: Pre-, Mid- and Postrolls</option>
                   <option value="[0, 0, 0, 1, true]">Ad-Pods: Only Postroll</option>
@@ -159,17 +172,25 @@ function addVastImaPlayer(settings) {
                   <option value="[2, 2, 2, 2, false]">No Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
                 </select>
               </span>
-              </div>
-            </div>
-            <div class="buttons">
-              <button class="button is-info" name="playVmap">Play VMAP</button>
-              <button class="button is-info" name="loadAndPlayVmap">Load VMAP</button>
             </div>
           </div>
-        </nav>
+          <div class="buttons">
+            <button class="button is-info" name="playVmap">Play VMAP</button>
+            <button class="button is-info" name="loadAndPlayVmap">Load VMAP</button>
+          </div>
+        </div>
+      </div>
+      <div class="player-log-screen" style="display:none;">
+        <div class="field">
+          <div class="control">
+            <textarea rows="16" wrap="off" class="textarea is-small" readonly placeholder="...player log will appear here..."></textarea>
+          </div>
+        </div>
+        <button class="button is-info" name="resetLog">Reset</button>
       </div>
     </div>
-  </div>`;
+  </div>
+</div>`;
   const element = document.createElement('section');
   element.classList.add('section');
   element.innerHTML = domString;
@@ -225,6 +246,26 @@ function connectElementEvents(element, vastImaPlayer) {
     volumeSliderOutput.innerHTML = video.volume * 100;
     adjustMutedUi();
   });
+
+  const adPlaybackButton = element.querySelector('.ad-playback-button');
+  const playerLogButton = element.querySelector('.player-log-button');
+  const adPlaybackScreen = element.querySelector('.ad-playback-screen');
+  const playerLogScreen = element.querySelector('.player-log-screen');
+
+  adPlaybackButton.addEventListener('click', () => {
+    playerLogScreen.style.display = 'none';
+    adPlaybackScreen.style.display = 'block';
+    playerLogButton.classList.toggle('is-active');
+    adPlaybackButton.classList.toggle('is-active');
+  });
+
+  playerLogButton.addEventListener('click', () => {
+    adPlaybackScreen.style.display = 'none';
+    playerLogScreen.style.display = 'block';
+    playerLogButton.classList.toggle('is-active');
+    adPlaybackButton.classList.toggle('is-active');
+  });
+  connectPlayerEventsToLog(element, vastImaPlayer);
 
   const vastUrlSelect = element.querySelector('[name=vastUrl]');
   const playVastButton = element.querySelector('[name=playVast]');
@@ -298,6 +339,62 @@ function connectElementEvents(element, vastImaPlayer) {
   removeButton.addEventListener('click', () => {
     vastImaPlayer.destroy();
     element.parentNode.removeChild(element);
+  });
+}
+
+function connectPlayerEventsToLog(element, vastImaPlayer) {
+  const textarea = element.querySelector('.player-log-screen textarea');
+  const resetLogButton = element.querySelector('.player-log-screen button[name="resetLog"]');
+
+  resetLogButton.addEventListener('click', () => {
+    textarea.value = '';
+  });
+
+  vastImaPlayer.addEventListener('MediaStart', () => {
+    textarea.value += 'MediaStart\n';
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('MediaImpression', () => {
+    textarea.value += 'MediaImpression\n';
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('MediaStop', () => {
+    textarea.value += 'MediaStop\n';
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('AdMetadata', () => {
+    textarea.value += `AdMetadata, ${ JSON.stringify(vastImaPlayer.cuePoints) }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('AdStarted', (event) => {
+    const adPodInfo = event.detail.ad.getAdPodInfo();
+    textarea.value += `AdStart, ${ JSON.stringify(adPodInfo) }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('AdComplete', (event) => {
+    const adPodInfo = event.detail.ad.getAdPodInfo();
+    textarea.value += `AdComplete, ${ JSON.stringify(adPodInfo) }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('AdProgress', () => {
+    textarea.value += `AdProgress, duration: ${ vastImaPlayer.duration }, currentTime: ${ vastImaPlayer.currentTime }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('timeupdate', () => {
+    textarea.value += `timeupdate, duration: ${ vastImaPlayer.duration }, currentTime: ${ vastImaPlayer.currentTime }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('ended', () => {
+    textarea.value += `ended, duration: ${ vastImaPlayer.duration }, currentTime: ${ vastImaPlayer.currentTime }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
   });
 }
 
