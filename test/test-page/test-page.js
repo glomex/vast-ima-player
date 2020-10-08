@@ -128,56 +128,82 @@ function addVastImaPlayer(settings) {
     <div class="tile is-child box">
       <div class="tabs is-boxed">
         <ul>
-          <li class="is-active ad-playback-button">
+          <li class="is-active ad-tag-url-button">
             <a>
-              <span>Ad Playback</span>
+              <span>Tag URL</span>
+            </a>
+          </li>
+          <li class="ad-tag-string-button">
+            <a>
+              <span>Tag String</span>
             </a>
           </li>
           <li class="player-log-button">
             <a>
-              <span>Player Log</span>
+              <span>Log</span>
             </a>
           </li>
         </ul>
         <button style="float:right;" class="delete is-large remove-button">Delete</button>
       </div>
-      <div class="ad-playback-screen">
-        <div>
-          <div class="field">
-            <label class="label">VAST-URL</label>
-            <div class="control">
-              <span class="select">
-                <select name="vastUrl">
-                  <option selected value="${LINEAR_AD_URL}">Linear VAST 4s</option>
-                  <option value="${NONLINEAR_AD_URL}">Nonlinear VAST</option>
-                  <option value="${NOT_FOUND_AD_URL}">Not Found URL</option>
-                </select>
-              </span>
-            </div>
+      <div class="ad-tag-url-screen">
+        <div class="field">
+          <label class="label">VAST URL</label>
+          <div class="control">
+            <span class="select">
+              <select name="vastUrl">
+                <option selected value="${LINEAR_AD_URL}">Linear VAST 4s</option>
+                <option value="${NONLINEAR_AD_URL}">Nonlinear VAST</option>
+                <option value="${NOT_FOUND_AD_URL}">Not Found URL</option>
+              </select>
+            </span>
           </div>
-          <div class="buttons">
-            <button class="button is-info" name="playVast">Play VAST</button>
-            <button class="button is-info" name="loadAndPlayVast">Load VAST</button>
+        </div>
+        <div class="buttons">
+          <button class="button is-info" name="playVast">Play VAST</button>
+          <button class="button is-info" name="loadAndPlayVast">Load VAST</button>
+        </div>
+        <hr>
+        <div class="field">
+          <label class="label">Manual</label>
+          <div class="control">
+            <input name="vastUrlManual" class="input" type="text" placeholder="...add your Ad-Tag-URL here ...">
           </div>
-          <hr>
-          <div class="field">
-            <label class="label">VMAP</label>
-            <div class="control">
-              <span class="select">
-                <select name="vmap">
-                  <option selected value="[1, 1, 1, 1, true]">Ad-Pods: Pre-, Mid- and Postrolls</option>
-                  <option value="[0, 0, 0, 1, true]">Ad-Pods: Only Postroll</option>
-                  <option value="[0, 0, 0, 0, true]">No Ad Breaks</option>
-                  <option value="[2, 2, 2, 2, true]">Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
-                  <option value="[2, 2, 2, 2, false]">No Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
-                </select>
-              </span>
-            </div>
+        </div>
+        <div class="buttons">
+          <button class="button is-info" name="playVastUrlManual">Play Ad-Tag</button>
+          <button class="button is-info" name="loadAndPlayVastUrlManual">Load Ad-Tag</button>
+        </div>
+      </div>
+      <div class="ad-tag-string-screen" style="display:none;">
+        <div class="field">
+          <label class="label">VMAP</label>
+          <div class="control">
+            <span class="select">
+              <select name="vmap">
+                <option selected value="[1, 1, 1, 1, true]">Ad-Pods: Pre-, Mid- and Postrolls</option>
+                <option value="[0, 0, 0, 1, true]">Ad-Pods: Only Postroll</option>
+                <option value="[0, 0, 0, 0, true]">No Ad Breaks</option>
+                <option value="[2, 2, 2, 2, true]">Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
+                <option value="[2, 2, 2, 2, false]">No Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
+              </select>
+            </span>
           </div>
-          <div class="buttons">
-            <button class="button is-info" name="playVmap">Play VMAP</button>
-            <button class="button is-info" name="loadAndPlayVmap">Load VMAP</button>
+        </div>
+        <div class="buttons">
+          <button class="button is-info" name="playVmap">Play VMAP</button>
+          <button class="button is-info" name="loadAndPlayVmap">Load VMAP</button>
+        </div>
+        <hr>
+        <div class="field">
+          <label class="label">Manual</label>
+          <div class="control">
+            <textarea name="adsResponseString" class="textarea is-small" placeholder="...enter your ads response here..."></textarea>
           </div>
+        </div>
+        <div class="buttons">
+          <button class="button is-info" name="playAdsResponseString">Play</button>
+          <button class="button is-info" name="loadAndPlayAdsResponseString">Load</button>
         </div>
       </div>
       <div class="player-log-screen" style="display:none;">
@@ -247,26 +273,41 @@ function connectElementEvents(element, vastImaPlayer) {
     adjustMutedUi();
   });
 
-  const adPlaybackButton = element.querySelector('.ad-playback-button');
+  const adTagUrlButton = element.querySelector('.ad-tag-url-button');
+  const adTagUrlScreen = element.querySelector('.ad-tag-url-screen');
+  const adTagStringButton = element.querySelector('.ad-tag-string-button');
+  const adTagStringScreen = element.querySelector('.ad-tag-string-screen');
   const playerLogButton = element.querySelector('.player-log-button');
-  const adPlaybackScreen = element.querySelector('.ad-playback-screen');
   const playerLogScreen = element.querySelector('.player-log-screen');
 
-  adPlaybackButton.addEventListener('click', () => {
+  adTagUrlButton.addEventListener('click', () => {
     playerLogScreen.style.display = 'none';
-    adPlaybackScreen.style.display = 'block';
-    playerLogButton.classList.toggle('is-active');
-    adPlaybackButton.classList.toggle('is-active');
+    adTagStringScreen.style.display = 'none';
+    adTagUrlScreen.style.display = 'block';
+    playerLogButton.classList.remove('is-active');
+    adTagStringButton.classList.remove('is-active');
+    adTagUrlButton.classList.add('is-active');
+  });
+  adTagStringButton.addEventListener('click', () => {
+    playerLogScreen.style.display = 'none';
+    adTagStringScreen.style.display = 'block';
+    adTagUrlScreen.style.display = 'none';
+    playerLogButton.classList.remove('is-active');
+    adTagStringButton.classList.add('is-active');
+    adTagUrlButton.classList.remove('is-active');
+  });
+  playerLogButton.addEventListener('click', () => {
+    adTagUrlScreen.style.display = 'none';
+    adTagStringScreen.style.display = 'none';
+    playerLogScreen.style.display = 'block';
+    playerLogButton.classList.add('is-active');
+    adTagStringButton.classList.remove('is-active');
+    adTagUrlButton.classList.remove('is-active');
   });
 
-  playerLogButton.addEventListener('click', () => {
-    adPlaybackScreen.style.display = 'none';
-    playerLogScreen.style.display = 'block';
-    playerLogButton.classList.toggle('is-active');
-    adPlaybackButton.classList.toggle('is-active');
-  });
   connectPlayerEventsToLog(element, vastImaPlayer);
 
+  // Section: VAST-URL
   const vastUrlSelect = element.querySelector('[name=vastUrl]');
   const playVastButton = element.querySelector('[name=playVast]');
   playVastButton.addEventListener('click', () => {
@@ -274,28 +315,42 @@ function connectElementEvents(element, vastImaPlayer) {
     playAdsRequest.adTagUrl = vastUrlSelect.value;
     vastImaPlayer.playAds(playAdsRequest);
   });
-
   const loadAndPlayVast = element.querySelector('[name=loadAndPlayVast]');
-  let currentVastStart = () => {};
-  loadAndPlayVast.addEventListener('click', () => {
-    if (loadAndPlayVast.innerHTML === 'Load VAST') {
-      loadAndPlayVast.classList.add('is-loading');
+  setupLoadAndPlayButton(
+    loadAndPlayVast,
+    'Start VAST',
+    () => {
       const playAdsRequest = new google.ima.AdsRequest();
       playAdsRequest.adTagUrl = vastUrlSelect.value;
-      vastImaPlayer.loadAds(playAdsRequest, ({ start }) => {
-        loadAndPlayVast.classList.remove('is-loading');
-        loadAndPlayVast.innerHTML = 'Start VAST';
-        currentVastStart = start;
-      });
-    } else {
-      currentVastStart();
-      loadAndPlayVast.innerHTML = 'Load VAST';
-    }
-  });
+      return playAdsRequest
+    },
+    vastImaPlayer
+  );
 
+  // Section: Manual VAST-URL
+  const vastUrlManual = element.querySelector('[name=vastUrlManual]');
+  const playVastUrlManualButton = element.querySelector('[name=playVastUrlManual]');
+  playVastUrlManualButton.addEventListener('click', () => {
+    const playAdsRequest = new google.ima.AdsRequest();
+    playAdsRequest.adTagUrl = vastUrlManual.value;
+    vastImaPlayer.playAds(playAdsRequest);
+  });
+  const loadAndPlayVastUrlManual = element.querySelector('[name=loadAndPlayVastUrlManual]');
+  setupLoadAndPlayButton(
+    loadAndPlayVastUrlManual,
+    'Start Ad-Tag',
+    () => {
+      const playAdsRequest = new google.ima.AdsRequest();
+      playAdsRequest.adTagUrl = vastUrlManual.value;
+      return playAdsRequest;
+    },
+    vastImaPlayer
+  );
+
+  // Section: VMAP examples
   const vmapSelect = element.querySelector('[name=vmap]');
   const playVmapButton = element.querySelector('[name=playVmap]');
-  playVmapButton.addEventListener('click', () => {
+  const createVmapAdsRequest = () => {
     const playAdsRequest = new google.ima.AdsRequest();
     const selectedValue = JSON.parse(vmapSelect.value);
     playAdsRequest.adsResponse = constructVmap({
@@ -305,35 +360,38 @@ function connectElementEvents(element, vastImaPlayer) {
       postrollCount: selectedValue[3],
       useAdPods: Boolean(selectedValue[4])
     });
-    vastImaPlayer.playAds(playAdsRequest);
+    element.querySelector('[name=adsResponseString]').value = playAdsRequest.adsResponse;
+    return playAdsRequest;
+  }
+  playVmapButton.addEventListener('click', () => {
+    vastImaPlayer.playAds(createVmapAdsRequest());
   });
   const loadAndPlayVmap = element.querySelector('[name=loadAndPlayVmap]');
-  let currentVmapStart = () => {};
-  loadAndPlayVmap.addEventListener('click', () => {
-    if (loadAndPlayVmap.innerHTML === 'Load VMAP') {
-      loadAndPlayVmap.classList.add('is-loading');
-      const playAdsRequest = new google.ima.AdsRequest();
-      const selectedValue = JSON.parse(vmapSelect.value);
-      playAdsRequest.adsResponse = constructVmap({
-        prerollCount: selectedValue[0],
-        midroll1Count: selectedValue[1],
-        midroll2Count: selectedValue[2],
-        postrollCount: selectedValue[3],
-        useAdPods: Boolean(selectedValue[4])
-      });
-      vastImaPlayer.loadAds(playAdsRequest, ({ start }) => {
-        loadAndPlayVmap.classList.remove('is-loading');
-        loadAndPlayVmap.innerHTML = 'Start VAST';
-        currentVmapStart = start;
-      });
-    } else {
-      currentVmapStart();
-      loadAndPlayVmap.innerHTML = 'Load VMAP';
-    }
+  setupLoadAndPlayButton(
+    loadAndPlayVmap,
+    'Start VMAP',
+    createVmapAdsRequest,
+    vastImaPlayer
+  );
+
+  // Section Manual Ads-Response
+  const adsResponseString = element.querySelector('[name=adsResponseString]');
+  const playAdsResponseString = element.querySelector('[name=playAdsResponseString]');
+  const createStringAdsRequest = () => {
+    const playAdsRequest = new google.ima.AdsRequest();
+    playAdsRequest.adsResponse = adsResponseString.value;
+    return playAdsRequest;
+  }
+  playAdsResponseString.addEventListener('click', () => {
+    vastImaPlayer.playAds(createStringAdsRequest());
   });
-  vastImaPlayer.addEventListener('MediaStop', () => {
-    loadAndPlayVmap.innerHTML = 'Load VMAP';
-  });
+  const loadAndPlayAdsResponseString = element.querySelector('[name=loadAndPlayAdsResponseString]');
+  setupLoadAndPlayButton(
+    loadAndPlayAdsResponseString,
+    'Start',
+    createStringAdsRequest,
+    vastImaPlayer
+  );
 
   const removeButton = element.querySelector('.remove-button');
   removeButton.addEventListener('click', () => {
@@ -366,19 +424,19 @@ function connectPlayerEventsToLog(element, vastImaPlayer) {
   });
 
   vastImaPlayer.addEventListener('AdMetadata', () => {
-    textarea.value += `AdMetadata, ${ JSON.stringify(vastImaPlayer.cuePoints) }\n`;
+    textarea.value += `AdMetadata, ${ JSON.stringify({ cuePoints: vastImaPlayer.cuePoints }) }\n`;
     textarea.scrollTop = textarea.scrollHeight;
   });
 
   vastImaPlayer.addEventListener('AdStarted', (event) => {
     const adPodInfo = event.detail.ad.getAdPodInfo();
-    textarea.value += `AdStart, ${ JSON.stringify(adPodInfo) }\n`;
+    textarea.value += `AdStarted, ${ JSON.stringify(adPodInfo.g) }\n`;
     textarea.scrollTop = textarea.scrollHeight;
   });
 
   vastImaPlayer.addEventListener('AdComplete', (event) => {
     const adPodInfo = event.detail.ad.getAdPodInfo();
-    textarea.value += `AdComplete, ${ JSON.stringify(adPodInfo) }\n`;
+    textarea.value += `AdComplete, ${ JSON.stringify(adPodInfo.g) }\n`;
     textarea.scrollTop = textarea.scrollHeight;
   });
 
@@ -402,6 +460,29 @@ function updateExternalPlayerControls(element, vastImaPlayer) {
   const currentVolume = String(vastImaPlayer.volume * 100 || 0);
   element.querySelector('.volume-slider input').value = currentVolume;
   element.querySelector('.volume-slider output').innerHTML = currentVolume;
+}
+
+function setupLoadAndPlayButton(
+  button, startText, createAdsRequest, vastImaPlayer
+) {
+  let currentStart = () => {};
+  const defaultText = button.innerHTML;
+  vastImaPlayer.addEventListener('MediaStop', () => {
+    button.innerHTML = defaultText;
+  });
+  button.addEventListener('click', () => {
+    if (button.innerHTML === defaultText) {
+      button.classList.add('is-loading');
+      vastImaPlayer.loadAds(createAdsRequest(), ({ start }) => {
+        button.classList.remove('is-loading');
+        button.innerHTML = startText;
+        currentStart = start;
+      });
+    } else {
+      currentStart();
+      button.innerHTML = defaultText;
+    }
+  });
 }
 
 function constructVmap({
