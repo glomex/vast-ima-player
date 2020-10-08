@@ -183,6 +183,7 @@ function addVastImaPlayer(settings) {
               <select name="vmap">
                 <option selected value="[1, 1, 1, 1, true]">Ad-Pods: Pre-, Mid- and Postrolls</option>
                 <option value="[0, 0, 0, 1, true]">Ad-Pods: Only Postroll</option>
+                <option value="[1, 0, 0, 0, true]">Ad-Pods: Only Preroll</option>
                 <option value="[0, 0, 0, 0, true]">No Ad Breaks</option>
                 <option value="[2, 2, 2, 2, true]">Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
                 <option value="[2, 2, 2, 2, false]">No Ad-Pods 2x: Pre-, Mid- and Postrolls</option>
