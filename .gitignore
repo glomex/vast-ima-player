@@ -105,4 +105,4 @@ dist
 
 .history
 
-test/test-page.bundle*
+test/test-page/test-page.bundle*

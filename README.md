@@ -10,7 +10,7 @@ This library can be used to build a simple outstream player or it can be used to
 
 ## Testing
 
-Either you execute the end-to-end tests via `npm test` or you start a local webserver via `npm start` and then visit http://localhost:5000/test/test-page.html.
+Either you execute the end-to-end tests via `npm test` or you start a local webserver via `npm start` and then visit http://localhost:5000/test/test-page/.
 
 ## License
 

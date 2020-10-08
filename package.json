@@ -16,7 +16,7 @@
     "start": "npm-run-all --parallel start:*",
     "start:serve": "serve",
     "start:bundle": "microbundle watch",
-    "start:test-page": "rollup -c test/rollup.config.js --watch",
+    "start:test-page": "rollup -c test/test-page/rollup.config.js --watch",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "test": "karma start karma.conf.js --single-run"
   },
