@@ -732,16 +732,6 @@ export class Player extends DelegatedEventTarget {
           }
         }
         break;
-      case AdEvent.Type.LOG:
-        // this gets triggered when individual positions of VMAP fail
-        const adDataLog = event.getAdData();
-        if (adDataLog.adError) {
-          const imaError = {
-            getError: () => adDataLog.adError,
-            getUserRequestContext: () => undefined
-          };
-          this._onAdError(imaError);
-        }
       case AdEvent.Type.AD_PROGRESS:
         const adDataProgress = event.getAdData();
         this.#adCurrentTime = adDataProgress.currentTime;

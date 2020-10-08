@@ -619,6 +619,17 @@ function createAdWaterfall() {
         <Extension type="waterfall" fallback_index="1"/>
       </Extensions>
     </Wrapper>
+  </Ad>
+  <Ad>
+    <Wrapper>
+      <!-- this should not be played because there was a valid ad before -->
+      <VASTAdTagURI>
+        <![CDATA[${LINEAR_AD_URL}]]>
+      </VASTAdTagURI>
+      <Extensions>
+        <Extension type="waterfall" fallback_index="1"/>
+      </Extensions>
+    </Wrapper>
   </Ad>`;
 }
 
