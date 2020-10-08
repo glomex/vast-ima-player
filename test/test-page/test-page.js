@@ -181,9 +181,9 @@ function addVastImaPlayer(settings) {
     adContainer,
     ...settings
   });
-  bulmaSlider.attach();
   updateExternalPlayerControls(element, vastImaPlayer);
   connectElementEvents(element, vastImaPlayer);
+  bulmaSlider.attach();
 }
 
 function connectElementEvents(element, vastImaPlayer) {
