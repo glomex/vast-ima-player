@@ -420,6 +420,11 @@ function connectPlayerEventsToLog(element, vastImaPlayer) {
     textarea.scrollTop = textarea.scrollHeight;
   });
 
+  vastImaPlayer.addEventListener('AdError', (event) => {
+    textarea.value += `AdError, ${ JSON.stringify({ errorCode: event.detail.error.errorCode, message: event.detail.error.message }) }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
   vastImaPlayer.addEventListener('MediaImpression', () => {
     textarea.value += 'MediaImpression\n';
     textarea.scrollTop = textarea.scrollHeight;
