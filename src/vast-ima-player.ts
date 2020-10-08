@@ -785,6 +785,12 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _startAdsManager() {
+    if (!this.#mediaStartTriggered) {
+      this.dispatchEvent(
+        new CustomEvent(PlayerEvent.MEDIA_START)
+      );
+      this.#mediaStartTriggered = true;
+    }
     if (this.#adsManager) {
       try {
         this.#adsManager.start();
