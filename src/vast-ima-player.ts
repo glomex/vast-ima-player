@@ -148,6 +148,7 @@ export class PlayerError extends Error {
 
 type StartAd = {
   start: () => void,
+  startWithoutReset: () => void,
   ad?: google.ima.Ad,
   adBreakTime?: number
 };
@@ -601,14 +602,11 @@ export class Player extends DelegatedEventTarget {
           this.#startAdCallback({
             ad: event.getAd(),
             start: () => {
-              if (this.#adsManager) {
-                try {
-                  this.#adsManager.start();
-                } catch(error) {
-                  this._onAdError(error);
-                }
-                this.#startAdCallback = undefined;
-              }
+              this._startAdsManager();
+              this.#startAdCallback = undefined;
+            },
+            startWithoutReset: () => {
+              this._startAdsManager();
             }
           });
         }
@@ -620,16 +618,17 @@ export class Player extends DelegatedEventTarget {
           this.#startAdCallback({
             adBreakTime: event.getAdData().adBreakTime,
             start: () => {
-              if (this.#adsManager) {
-                this.#adsManager.start();
-                // we reset after we received the first
-                // start() after preroll
-                this.#startAdCallback = undefined;
-              }
+              this._startAdsManager();
+              // we reset after we received the first
+              // start() after preroll
+              this.#startAdCallback = undefined;
+            },
+            startWithoutReset: () => {
+              this._startAdsManager();
             }
           });
         } else {
-          this.#adsManager.start();
+          this._startAdsManager();
         }
         break;
       case AdEvent.Type.STARTED:
@@ -725,6 +724,9 @@ export class Player extends DelegatedEventTarget {
               start: () => {
                 this._playContent();
                 this.#startAdCallback = undefined;
+              },
+              startWithoutReset: () => {
+                this._playContent();
               }
             })
           }
@@ -775,10 +777,20 @@ export class Player extends DelegatedEventTarget {
       if (!this.#startAdCallback) {
         // ensures to synchronize initial media-player state (e.g. muted state)
         // and auto-start ad / ads
-        adsManager.start();
+        this._startAdsManager();
       }
     } catch (adError) {
       this._onAdError(adError);
+    }
+  }
+
+  private _startAdsManager() {
+    if (this.#adsManager) {
+      try {
+        this.#adsManager.start();
+      } catch(error) {
+        this._onAdError(error);
+      }
     }
   }
 
@@ -887,6 +899,9 @@ export class Player extends DelegatedEventTarget {
         start: () => {
           this._playContent();
           this.#startAdCallback = undefined;
+        },
+        startWithoutReset: () => {
+          this._playContent();
         }
       })
     } else {
