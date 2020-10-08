@@ -56,7 +56,7 @@
       <div class="navbar-start">
         <div class="navbar-item has-dropdown is-hoverable">
           <a class="navbar-link">
-            Add VAST-IMA-Player
+            Add VAST-IMA-Player (settings)
           </a>
           <form id="addPlayerForm" class="navbar-dropdown" style="padding: 1em;">
             <div class="field">
@@ -79,6 +79,24 @@
             </div>
             <div class="field">
               <label class="checkbox">
+                <input name="useAdContainerAsClickElement" type="checkbox" checked>
+                Ad-Container as Ad Click Element
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
+                <input name="disableCustomPlaybackForIOS10Plus" type="checkbox" checked>
+                Use 2 Video Elements on iPhone
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
+                <input name="autoResize" type="checkbox" checked>
+                Auto Resize Ad-Container
+              </label>
+            </div>
+            <div class="field">
+              <label class="checkbox">
                 <input name="useStyledNonLinearAds" type="checkbox">
                 Style NonLinear Ads
               </label>
@@ -95,10 +113,16 @@
                 Auto Align
               </label>
             </div>
-            <div class="field">
-              <label class="label">Load Video Timeout</label>
+            <div class="field is-horizontal">
+              <label class="label is-small">Load Video Timeout</label>
               <div class="control">
                 <input name="loadVideoTimeout" class="input" type="text" placeholder="10000" value="10000">
+              </div>
+            </div>
+            <div class="field is-horizontal">
+              <label class="label is-small">Vast Load Timeout</label>
+              <div class="control">
+                <input name="vastLoadTimeout" class="input" type="text" placeholder="5000" value="5000">
               </div>
             </div>
             <hr class="navbar-divider">

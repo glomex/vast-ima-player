@@ -61,7 +61,10 @@ function initializeVastImaPlayer({
   useStyledNonLinearAds,
   useStyledLinearAds,
   autoAlign,
-  renderAdUiElements
+  renderAdUiElements,
+  useAdContainerAsClickElement,
+  disableCustomPlaybackForIOS10Plus,
+  autoResize
 } = {}) {
   const adsRenderingSettings = new google.ima.AdsRenderingSettings();
   adsRenderingSettings.enablePreloading = enablePreloading;
@@ -77,11 +80,12 @@ function initializeVastImaPlayer({
   } else {
     adsRenderingSettings.uiElements = [];
   }
-
   const adImaPlayerOptions = new vastImaPlayer.PlayerOptions();
-  adImaPlayerOptions.clickTrackingElement = adContainer;
-  adImaPlayerOptions.disableCustomPlaybackForIOS10Plus = false;
-  adImaPlayerOptions.autoResize = true;
+  if (useAdContainerAsClickElement) {
+    adImaPlayerOptions.clickTrackingElement = adContainer;
+  }
+  adImaPlayerOptions.disableCustomPlaybackForIOS10Plus = disableCustomPlaybackForIOS10Plus;
+  adImaPlayerOptions.autoResize = autoResize;
 
   return new vastImaPlayer.Player(
     google.ima, video, adContainer,
@@ -319,6 +323,7 @@ function connectElementEvents(element, vastImaPlayer) {
   playVastButton.addEventListener('click', () => {
     const playAdsRequest = new google.ima.AdsRequest();
     playAdsRequest.adTagUrl = vastUrlSelect.value;
+    playAdsRequest.vastLoadTimeout = settings.vastLoadTimeout;
     vastImaPlayer.playAds(playAdsRequest);
   });
   const loadAndPlayVast = element.querySelector('[name=loadAndPlayVast]');
@@ -328,6 +333,7 @@ function connectElementEvents(element, vastImaPlayer) {
     () => {
       const playAdsRequest = new google.ima.AdsRequest();
       playAdsRequest.adTagUrl = vastUrlSelect.value;
+      playAdsRequest.vastLoadTimeout = settings.vastLoadTimeout;
       return playAdsRequest
     },
     vastImaPlayer
@@ -339,6 +345,7 @@ function connectElementEvents(element, vastImaPlayer) {
   playVastUrlManualButton.addEventListener('click', () => {
     const playAdsRequest = new google.ima.AdsRequest();
     playAdsRequest.adTagUrl = vastUrlManual.value;
+    playAdsRequest.vastLoadTimeout = settings.vastLoadTimeout;
     vastImaPlayer.playAds(playAdsRequest);
   });
   const loadAndPlayVastUrlManual = element.querySelector('[name=loadAndPlayVastUrlManual]');
@@ -348,6 +355,7 @@ function connectElementEvents(element, vastImaPlayer) {
     () => {
       const playAdsRequest = new google.ima.AdsRequest();
       playAdsRequest.adTagUrl = vastUrlManual.value;
+      playAdsRequest.vastLoadTimeout = settings.vastLoadTimeout;
       return playAdsRequest;
     },
     vastImaPlayer
@@ -359,6 +367,7 @@ function connectElementEvents(element, vastImaPlayer) {
   const createVmapAdsRequest = () => {
     const playAdsRequest = new google.ima.AdsRequest();
     const selectedValue = JSON.parse(vmapSelect.value);
+    playAdsRequest.vastLoadTimeout = settings.vastLoadTimeout;
     playAdsRequest.adsResponse = constructVmap({
       prerollCount: selectedValue[0],
       midroll1Count: selectedValue[1],
@@ -388,6 +397,7 @@ function connectElementEvents(element, vastImaPlayer) {
   const createStringAdsRequest = () => {
     const playAdsRequest = new google.ima.AdsRequest();
     playAdsRequest.adsResponse = adsResponseString.value;
+    playAdsRequest.vastLoadTimeout = settings.vastLoadTimeout;
     return playAdsRequest;
   }
   playAdsResponseString.addEventListener('click', () => {
