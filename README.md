@@ -10,7 +10,9 @@ This library can be used to build a simple outstream player or it can be used to
 
 ## Testing
 
-Either you execute the end-to-end tests via `npm test` or you start a local webserver via `npm start` and then visit http://localhost:5000/test/test-page/.
+Open the test-page: http://unpkg.com/@glomex/vast-ima-player@1/test-page/
+
+Or checkout this repository and execute the end-to-end tests via `npm test`. You can also start a local webserver via `npm start` and then open the http://localhost:5000/test-page/.
 
 ## License
 

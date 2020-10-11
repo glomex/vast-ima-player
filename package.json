@@ -12,17 +12,20 @@
   },
   "scripts": {
     "prepare": "npm run -s build",
-    "build": "microbundle",
+    "build": "npm-run-all --parallel build:*",
+    "build:bundle": "rollup -c test-page/rollup.config.js",
+    "build:test-page": "microbundle",
     "start": "npm-run-all --parallel start:*",
     "start:serve": "serve",
     "start:bundle": "microbundle watch",
-    "start:test-page": "rollup -c test/test-page/rollup.config.js --watch",
+    "start:test-page": "rollup -c test-page/rollup.config.js --watch",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "test": "karma start karma.conf.js --single-run"
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "test-page"
   ],
   "keywords": [
     "ima",
