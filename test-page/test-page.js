@@ -239,11 +239,11 @@ function addVastImaPlayer(settings) {
     ...settings
   });
   updateExternalPlayerControls(element, vastImaPlayer);
-  connectElementEvents(element, vastImaPlayer);
+  connectElementEvents(element, vastImaPlayer, settings);
   bulmaSlider.attach();
 }
 
-function connectElementEvents(element, vastImaPlayer) {
+function connectElementEvents(element, vastImaPlayer, settings) {
   const video = element.querySelector('video');
 
   element.querySelector('.play-button').addEventListener('click', () => {
