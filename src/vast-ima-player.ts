@@ -751,9 +751,11 @@ export class Player extends DelegatedEventTarget {
           event
         );
         if (PlayerEvent[imaEventName]) {
+          const isEventWithAdData = ['LOG', 'AD_PROGRESS'].indexOf(imaEventName) > -1;
           this.dispatchEvent(new CustomEvent(PlayerEvent[imaEventName], {
             detail: {
-              ad: event.getAd() || this.#currentAd
+              ad: event.getAd() || this.#currentAd,
+              adData: isEventWithAdData ? event.getAdData() : {}
             }
           }));
         }

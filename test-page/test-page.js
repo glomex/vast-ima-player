@@ -463,8 +463,13 @@ function connectPlayerEventsToLog(element, vastImaPlayer) {
     textarea.scrollTop = textarea.scrollHeight;
   });
 
-  vastImaPlayer.addEventListener('AdProgress', () => {
-    textarea.value += `AdProgress, duration: ${ vastImaPlayer.duration }, currentTime: ${ vastImaPlayer.currentTime }\n`;
+  vastImaPlayer.addEventListener('AdProgress', (event) => {
+    textarea.value += `AdProgress, duration: ${ vastImaPlayer.duration }, currentTime: ${ vastImaPlayer.currentTime }, adData: ${ JSON.stringify(event.detail.adData) }\n`;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+
+  vastImaPlayer.addEventListener('AdLog', (event) => {
+    textarea.value += `AdLog, adData: ${ JSON.stringify(event.detail.adData) }\n`;
     textarea.scrollTop = textarea.scrollHeight;
   });
 
