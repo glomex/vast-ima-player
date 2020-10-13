@@ -174,9 +174,22 @@
       </div>
     </div>
   </nav>
+  <div id="adBlockerErrorMessage" class="container" style="padding-top: 1em; display:none;">
+    <article class="message is-danger">
+      <div class="message-header">
+        <p>Google IMA could not be loaded</p>
+      </div>
+      <div class="message-body">
+        To test the VAST-IMA-Player you need to disable your ad-blocker.
+      </div>
+    </article>
+  </div>
   <script src="test-page.bundle.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      if (!window.google || !window.google.ima) {
+        document.getElementById('adBlockerErrorMessage').style.display = 'block';
+      }
       testPage.connectPageEvents();
     });
   </script>
