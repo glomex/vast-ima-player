@@ -84,7 +84,9 @@ function initializeVastImaPlayer({
   if (useAdContainerAsClickElement) {
     adImaPlayerOptions.clickTrackingElement = adContainer;
   }
-  adImaPlayerOptions.disableCustomPlaybackForIOS10Plus = disableCustomPlaybackForIOS10Plus;
+  adImaPlayerOptions.disableCustomPlaybackForIOS10Plus = Boolean(
+    disableCustomPlaybackForIOS10Plus
+  );
   adImaPlayerOptions.autoResize = autoResize;
 
   return new vastImaPlayer.Player(

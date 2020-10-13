@@ -204,6 +204,9 @@ export class Player extends DelegatedEventTarget {
       // will be used for content and ad playback
       this.#mediaElement.setAttribute('playsinline', '');
     }
+    this.#ima.settings.setDisableCustomPlaybackForIOS10Plus(
+      options.disableCustomPlaybackForIOS10Plus
+    );
 
     this.#adDisplayContainer = new ima.AdDisplayContainer(
       adElement,
@@ -214,9 +217,6 @@ export class Player extends DelegatedEventTarget {
     );
     this.#adElement.style.display = 'none';
     this.#adsLoader = new ima.AdsLoader(this.#adDisplayContainer);
-    this.#ima.settings.setDisableCustomPlaybackForIOS10Plus(
-      options.disableCustomPlaybackForIOS10Plus
-    );
 
     // later used for to determine playhead for triggering midrolls
     // and to determine whether the player is currently playing content
@@ -304,25 +304,48 @@ export class Player extends DelegatedEventTarget {
     startAdCallback: StartAdCallback
   ) {
     this.#ima.settings.setAutoPlayAdBreaks(false);
-    this._requestAds(adsRequest);
-    this.#startAdCallback = startAdCallback;
+    this._requestAds(adsRequest, startAdCallback);
   }
 
-  private _requestAds(adsRequest: google.ima.AdsRequest) {
+  private _requestAds(
+    adsRequest: google.ima.AdsRequest,
+    startAdCallback?: StartAdCallback
+  ) {
     this.#adDisplayContainer.initialize();
     // in case of replay we go back to start
     if (this.#mediaElement.ended) {
       this.#customPlayhead.reset();
       this.#mediaElement.currentTime = 0;
     }
-    this.reset();
+    const resetAndRequestAds = () => {
+      this.#mediaElement.removeEventListener(
+        'loadedmetadata', resetAndRequestAds
+      );
+      this.reset();
+      this.#startAdCallback = startAdCallback;
+      adsRequest.linearAdSlotWidth = this.#width;
+      adsRequest.linearAdSlotHeight = this.#height;
+      adsRequest.nonLinearAdSlotWidth = this.#width;
+      adsRequest.nonLinearAdSlotHeight = this.#height;
 
-    adsRequest.linearAdSlotWidth = this.#width;
-    adsRequest.linearAdSlotHeight = this.#height;
-    adsRequest.nonLinearAdSlotWidth = this.#width;
-    adsRequest.nonLinearAdSlotHeight = this.#height;
+      this.#adsLoader.requestAds(adsRequest);
+    }
 
-    this.#adsLoader.requestAds(adsRequest);
+    if (
+      this._isCustomPlaybackUsed() && this.#adsManager
+      && this.#currentAd && this.#currentAd.isLinear()
+    ) {
+      // On iOS with single video tag we first need to
+      // finish "adsManager.stop" during ad-playback to get back
+      // to the content before calling "adsManager.destroy".
+      // Otherwise it would use the current displayed ad as content.
+      this.#adsManager.stop();
+      this.#mediaElement.addEventListener(
+        'loadedmetadata', resetAndRequestAds
+      );
+    } else {
+      resetAndRequestAds();
+    }
   }
 
   skipAd() {
@@ -499,10 +522,12 @@ export class Player extends DelegatedEventTarget {
     });
     this.#adDisplayContainer.destroy();
     this.#adsLoader.destroy();
-    this.#resizeObserver.disconnect();
     this.#mediaImpressionTriggered = false;
     this.#customPlaybackTimeAdjustedOnEnded = false;
     this.#mediaStartTriggered = false;
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+    }
   }
 
   private _resetAd() {
