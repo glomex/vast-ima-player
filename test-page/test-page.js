@@ -103,7 +103,7 @@ function addVastImaPlayer(settings) {
     <div class="tile is-8 is-child box">
       <div class="playerContainer">
         <video ${settings.muted ? 'muted ' : '' }controls playsinline
-          poster="https://glomex.github.io/vast-ima-player/big-buck-bunny.png" preload="none">
+          poster="https://glomex.github.io/vast-ima-player/big-buck-bunny.png" preload="auto">
           <source type="video/mp4" src="https://glomex.github.io/vast-ima-player/big-buck-bunny.mp4">
         </video>
         <div class="adContainer"></div>
