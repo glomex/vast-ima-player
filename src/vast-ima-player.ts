@@ -311,7 +311,6 @@ export class Player extends DelegatedEventTarget {
     adsRequest: google.ima.AdsRequest,
     startAdCallback?: StartAdCallback
   ) {
-    this.#adDisplayContainer.initialize();
     // in case of replay we go back to start
     if (this.#mediaElement.ended) {
       this.#customPlayhead.reset();
@@ -791,9 +790,15 @@ export class Player extends DelegatedEventTarget {
     // start ad playback
     try {
       adsManager.init(this.#width, this.#height, this._getViewMode());
+      // initial sync of volume so that muted autoplay works
+      adsManager.setVolume(
+        this.#mediaElement.muted ? 0 : this.#mediaElement.volume
+      );
+      // ensure to initialize the ad container at least once before
+      // starting it. For playback with sound it requires a synchronous
+      // .activate()
+      this.#adDisplayContainer.initialize();
       if (!this.#startAdCallback) {
-        // ensures to synchronize initial media-player state (e.g. muted state)
-        // and auto-start ad / ads
         this._startAdsManager();
       }
     } catch (adError) {
