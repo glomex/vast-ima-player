@@ -357,10 +357,10 @@ export class Player extends DelegatedEventTarget {
    * Starts playback of either content or ad element.
    */
   play() {
-    if (this.#customPlayhead.enabled) {
-      this.#mediaElement.play();
-    } else {
+    if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.resume();
+    } else {
+      this.#mediaElement.play();
     }
   }
 
@@ -368,10 +368,10 @@ export class Player extends DelegatedEventTarget {
    * Pauses playback of either content or ad element.
    */
   pause() {
-    if (this.#customPlayhead.enabled) {
-      this.#mediaElement.pause();
-    } else {
+    if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.pause();
+    } else {
+      this.#mediaElement.pause();
     }
   }
 
@@ -379,10 +379,10 @@ export class Player extends DelegatedEventTarget {
    * Sets volume of either content or ad element.
    */
   set volume(volume: number) {
-    if (this.#customPlayhead.enabled) {
-      this.#mediaElement.volume = volume;
-    } else {
+    if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.setVolume(volume);
+    } else {
+      this.#mediaElement.volume = volume;
     }
   }
 
@@ -390,7 +390,7 @@ export class Player extends DelegatedEventTarget {
    * Returns volume of either content or ad element.
    */
   get volume() {
-    if (!this.#customPlayhead.enabled) {
+    if (!this.#customPlayhead.enabled && this.#adsManager) {
       return this.#adsManager.getVolume();
     }
     return this.#mediaElement.volume;
@@ -400,12 +400,12 @@ export class Player extends DelegatedEventTarget {
    * Sets muted state on either content or ad element.
    */
   set muted(muted: boolean) {
-    if (this.#customPlayhead.enabled) {
-      this.#mediaElement.muted = muted;
-    } else {
+    if (!this.#customPlayhead.enabled && this.#adsManager) {
       // ignoring the fact that there is a separate
       // muted flag on the media element
       this.#adsManager.setVolume(muted ? 0 : 1);
+    } else {
+      this.#mediaElement.muted = muted;
     }
   }
 
@@ -413,7 +413,7 @@ export class Player extends DelegatedEventTarget {
    * Returns muted state of either content or ad element.
    */
   get muted() {
-    if (!this.#customPlayhead.enabled) {
+    if (!this.#customPlayhead.enabled && this.#adsManager) {
       return this.#adsManager.getVolume() === 0;
     }
     return this.#mediaElement.muted;
