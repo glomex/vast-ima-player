@@ -316,11 +316,7 @@ export class Player extends DelegatedEventTarget {
       this.#customPlayhead.reset();
       this.#mediaElement.currentTime = 0;
     }
-    const resetAndRequestAds = () => {
-      this.#mediaElement.removeEventListener(
-        'loadedmetadata', resetAndRequestAds
-      );
-      this.reset();
+    this.reset().then(() => {
       this.#startAdCallback = startAdCallback;
       adsRequest.linearAdSlotWidth = this.#width;
       adsRequest.linearAdSlotHeight = this.#height;
@@ -328,23 +324,7 @@ export class Player extends DelegatedEventTarget {
       adsRequest.nonLinearAdSlotHeight = this.#height;
 
       this.#adsLoader.requestAds(adsRequest);
-    }
-
-    if (
-      this._isCustomPlaybackUsed() && this.#adsManager
-      && this.#currentAd && this.#currentAd.isLinear()
-    ) {
-      // On iOS with single video tag we first need to
-      // finish "adsManager.stop" during ad-playback to get back
-      // to the content before calling "adsManager.destroy".
-      // Otherwise it would use the current displayed ad as content.
-      this.#adsManager.stop();
-      this.#mediaElement.addEventListener(
-        'loadedmetadata', resetAndRequestAds
-      );
-    } else {
-      resetAndRequestAds();
-    }
+    });
   }
 
   skipAd() {
@@ -495,15 +475,40 @@ export class Player extends DelegatedEventTarget {
    * Cleans up current ad and ad manager session.
    */
   reset() {
+    const isSpecialReset = this._isCustomPlaybackUsed()
+      && this.#adsManager
+      && this.#currentAd
+      && this.#currentAd.isLinear();
+    const destroyAdsManager = () => {
+      if (this.#adsManager) {
+        this.#adsManager.destroy();
+        this.#adsLoader.contentComplete();
+        this.#adsManager = undefined;
+      }
+    };
     this._resetAd();
     this.#cuePoints = [];
     this.#startAdCallback = undefined;
-    if (this.#adsManager) {
-      // see https://developers.google.com/interactive-media-ads/docs/sdks/html5/faq#8
-      this.#adsManager.destroy();
-      this.#adsLoader.contentComplete();
-      this.#adsManager = undefined;
+    if (isSpecialReset) {
+      return new Promise((resolve) => {
+        // On iOS with single video tag we first need to
+        // finish "adsManager.stop" during ad-playback to get back
+        // to the content before calling "adsManager.destroy".
+        // Otherwise it would use the current displayed ad as content.
+        // We also wait until canplay + 50ms to ensure that IMA
+        // is done resetting
+        const onCanPlay = () => {
+          this.#mediaElement.removeEventListener('canplay', onCanPlay);
+          destroyAdsManager();
+          setTimeout(() => resolve(), 50);
+        }
+        this.#adsManager.stop();
+        this.#adsManager.discardAdBreak();
+        this.#mediaElement.addEventListener('canplay', onCanPlay);
+      });
     }
+    destroyAdsManager();
+    return Promise.resolve();
   }
 
   /**
@@ -682,8 +687,9 @@ export class Player extends DelegatedEventTarget {
         if (this.#customPlaybackTimeAdjustedOnEnded) {
           return;
         }
-        this.reset();
-        this._playContent();
+        this.reset().then(() => {
+          this._playContent();
+        });
         break;
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
         this._resetAd();
