@@ -687,9 +687,7 @@ export class Player extends DelegatedEventTarget {
         if (this.#customPlaybackTimeAdjustedOnEnded) {
           return;
         }
-        this.reset().then(() => {
-          this._playContent();
-        });
+        this.reset();
         break;
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
         this._resetAd();
@@ -766,6 +764,19 @@ export class Player extends DelegatedEventTarget {
         const adDataProgress = event.getAdData();
         this.#adCurrentTime = adDataProgress.currentTime;
         this.#adDuration = adDataProgress.duration;
+      case AdEvent.Type.LOG:
+        // called when an error occurred in VMAP (e.g. empty preroll)
+        if (this.#startAdCallback) {
+          this.#startAdCallback({
+            start: () => {
+              this._playContent();
+              this.#startAdCallback = undefined;
+            },
+            startWithoutReset: () => {
+              this._playContent();
+            }
+          })
+        }
     }
   }
 
