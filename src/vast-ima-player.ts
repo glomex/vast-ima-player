@@ -5,6 +5,8 @@ import { CustomPlayhead } from './custom-playhead';
 import { DelegatedEventTarget } from './delegated-event-target';
 
 const IGNORE_UNTIL_CURRENT_TIME = 0.5;
+const REQUEST_ADS_TIMEOUT = 5000;
+const REQUEST_ADS_TIMEOUT_ERROR = 9000;
 const MEDIA_ELEMENT_EVENTS = [
   'abort', 'canplay', 'canplaythrough',
   'durationchange', 'emptied', 'ended',
@@ -179,6 +181,7 @@ export class Player extends DelegatedEventTarget {
   #adCurrentTime: number;
   #adDuration: number;
   #startAdCallback: StartAdCallback;
+  #requestAdsTimeout: number;
 
   constructor(
     ima: ImaSdk,
@@ -235,7 +238,9 @@ export class Player extends DelegatedEventTarget {
     );
     this.#adsLoader.addEventListener(
       this.#ima.AdErrorEvent.Type.AD_ERROR,
-      (event) => this._onAdError(event),
+      (event) => {
+        this._onAdError(this._createPlayerErrorFromImaErrorEvent(event))
+      },
       false
     );
 
@@ -323,6 +328,13 @@ export class Player extends DelegatedEventTarget {
       adsRequest.nonLinearAdSlotWidth = this.#width;
       adsRequest.nonLinearAdSlotHeight = this.#height;
 
+      // trigger an error after 5s in case adsManagerLoaded
+      // does not come up, so that content playback starts
+      this.#requestAdsTimeout = window.setTimeout(() => {
+        const error = new PlayerError(`No adsManagerLoadedEvent within ${REQUEST_ADS_TIMEOUT}ms.`);
+        error.errorCode = REQUEST_ADS_TIMEOUT_ERROR;
+        this._onAdError(error);
+      }, REQUEST_ADS_TIMEOUT);
       this.#adsLoader.requestAds(adsRequest);
     });
   }
@@ -764,7 +776,9 @@ export class Player extends DelegatedEventTarget {
         const adDataProgress = event.getAdData();
         this.#adCurrentTime = adDataProgress.currentTime;
         this.#adDuration = adDataProgress.duration;
+        break;
       case AdEvent.Type.LOG:
+        const adData = event.getAdData();
         // called when an error occurred in VMAP (e.g. empty preroll)
         if (this.#startAdCallback) {
           this.#startAdCallback({
@@ -776,12 +790,16 @@ export class Player extends DelegatedEventTarget {
               this._playContent();
             }
           })
+        } else if (adData.adError) {
+          this._playContent();
         }
+        break;
     }
   }
 
   private _onAdsManagerLoaded(loadedEvent: google.ima.AdsManagerLoadedEvent) {
     const { AdEvent, AdErrorEvent: { Type: { AD_ERROR } } } = this.#ima;
+    window.clearTimeout(this.#requestAdsTimeout);
     const adsManager = this.#adsManager = loadedEvent.getAdsManager(
       this.#customPlayhead, this.#adsRenderingSettings
     );
@@ -802,7 +820,9 @@ export class Player extends DelegatedEventTarget {
         }
       });
     });
-    adsManager.addEventListener(AD_ERROR, (event) => this._onAdError(event));
+    adsManager.addEventListener(AD_ERROR, (event) => this._onAdError(
+      this._createPlayerErrorFromImaErrorEvent(event)
+    ));
 
     // start ad playback
     try {
@@ -819,7 +839,7 @@ export class Player extends DelegatedEventTarget {
         this._startAdsManager();
       }
     } catch (adError) {
-      this._onAdError(adError);
+      this._onAdError(new PlayerError(adError.message));
     }
   }
 
@@ -834,7 +854,7 @@ export class Player extends DelegatedEventTarget {
       try {
         this.#adsManager.start();
       } catch(error) {
-        this._onAdError(error);
+        this._onAdError(new PlayerError(error.message));
       }
     }
   }
@@ -921,7 +941,8 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
-  private _createPlayerErrorFromImaError(error) {
+  private _createPlayerErrorFromImaErrorEvent(event: google.ima.AdErrorEvent) {
+    const error = event.getError();
     const playerError = new PlayerError(error.getMessage());
     playerError.type = error.getType();
     playerError.errorCode = error.getErrorCode();
@@ -930,13 +951,7 @@ export class Player extends DelegatedEventTarget {
     return playerError;
   }
 
-  private _onAdError(event: google.ima.AdErrorEvent) {
-    let error;
-    if (event && event.getError) {
-      error = this._createPlayerErrorFromImaError(event.getError());
-    } else {
-      error = this._createPlayerErrorFromImaError(event);
-    }
+  private _onAdError(error: PlayerError) {
     this.dispatchEvent(new CustomEvent(PlayerEvent.AD_ERROR, {
       detail: { error }
     }));
