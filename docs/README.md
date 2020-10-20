@@ -30,6 +30,7 @@ This library focuses on managing the actual media monetization lifecycle and on 
 * Prefixes all IMA events with `Ad` so that they are more aligned with the [VPAID 2.0 standard](https://www.iab.com/wp-content/uploads/2015/06/VPAID_2_0_Final_04-10-2012.pdf).
 * It auto-resizes the IMA ad container (but also allows manual control).
 * Synchronizes volume & muted state when switching between ad and content
+* Fixes several issues on iOS (when a single video tag is used), e.g. reset after postroll, adjusting content source and properly resetting IMA
 
 ## Limitations
 

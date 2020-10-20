@@ -699,6 +699,15 @@ export class Player extends DelegatedEventTarget {
         if (this.#customPlaybackTimeAdjustedOnEnded) {
           return;
         }
+        if (
+          this._isCustomPlaybackUsed()
+          && Boolean(this.#currentAd)
+          && this.#currentAd.getAdPodInfo().getTimeOffset() !== -1
+        ) {
+          // on iOS it sometimes only triggers ALL_ADS_COMPLETED
+          // before CONTENT_RESUME_REQUESTED
+          this._playContent();
+        }
         this.reset();
         break;
       case AdEvent.Type.CONTENT_PAUSE_REQUESTED:
