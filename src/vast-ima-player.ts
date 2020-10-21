@@ -494,7 +494,7 @@ export class Player extends DelegatedEventTarget {
    * @returns a promise which resolves after all the cleanup work is done
    */
   reset(force: boolean = false) {
-    const isSpecialReset = this._isCustomPlaybackUsed()
+    const isSpecialReset = this.isCustomPlaybackUsed()
       && this.#adsManager
       && this.#currentAd
       && this.#currentAd.isLinear()
@@ -554,6 +554,12 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  isCustomPlaybackUsed() {
+    const { settings } = this.#ima;
+    return settings.getDisableCustomPlaybackForIOS10Plus() === false
+      && !this.#adElement.querySelector('video');
+  }
+
   private _resetAd() {
     window.clearTimeout(this.#requestAdsTimeout);
     this.#currentAd = undefined;
@@ -602,7 +608,7 @@ export class Player extends DelegatedEventTarget {
       this.#mediaStartTriggered = true;
     }
     if (event.type === 'ended') {
-      if (this._isCustomPlaybackUsed()
+      if (this.isCustomPlaybackUsed()
         && this.#mediaElement.currentTime === this.#mediaElement.duration
         && this.#cuePoints.indexOf(-1) > -1
       ) {
@@ -709,7 +715,7 @@ export class Player extends DelegatedEventTarget {
           return;
         }
         if (
-          this._isCustomPlaybackUsed()
+          this.isCustomPlaybackUsed()
           && Boolean(this.#currentAd)
           && this.#currentAd.getAdPodInfo().getTimeOffset() !== -1
         ) {
@@ -875,12 +881,6 @@ export class Player extends DelegatedEventTarget {
         this._onAdError(new PlayerError(error.message));
       }
     }
-  }
-
-  private _isCustomPlaybackUsed() {
-    const { settings } = this.#ima;
-    return settings.getDisableCustomPlaybackForIOS10Plus() === false
-      && !this.#adElement.querySelector('video');
   }
 
   private _mediaStop() {
