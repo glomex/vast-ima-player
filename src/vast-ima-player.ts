@@ -485,12 +485,20 @@ export class Player extends DelegatedEventTarget {
 
   /**
    * Cleans up current ad and ad manager session.
+   *
+   * Externally call this function with "force = true" when you want to switch
+   * the content source before doing another "playAds" or "loadAds",
+   * so that it does a full cleanup on iOS with a single-video-tag.
+   *
+   * @param force - enforces a full cleanup on iOS with single video-tag. Useful when a new source will be assigned afterwards.
+   * @returns a promise which resolves after all the cleanup work is done
    */
-  reset() {
+  reset(force: boolean = false) {
     const isSpecialReset = this._isCustomPlaybackUsed()
       && this.#adsManager
       && this.#currentAd
-      && this.#currentAd.isLinear();
+      && this.#currentAd.isLinear()
+      && force;
     const destroyAdsManager = () => {
       if (this.#adsManager) {
         this.#adsManager.destroy();
