@@ -555,6 +555,7 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _resetAd() {
+    window.clearTimeout(this.#requestAdsTimeout);
     this.#currentAd = undefined;
     this.#adCurrentTime = undefined;
     this.#adDuration = undefined;
