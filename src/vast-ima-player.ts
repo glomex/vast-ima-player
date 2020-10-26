@@ -880,6 +880,8 @@ export class Player extends DelegatedEventTarget {
       } catch(error) {
         this._onAdError(new PlayerError(error.message));
       }
+    } else {
+      this._playContent();
     }
   }
 
