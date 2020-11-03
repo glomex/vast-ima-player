@@ -814,7 +814,7 @@ export class Player extends DelegatedEventTarget {
               this._playContent();
             }
           })
-        } else if (adData.adError) {
+        } else if (adData.adError && !this.#currentAd) {
           this._playContent();
         }
         break;
