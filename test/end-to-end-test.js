@@ -170,8 +170,6 @@ describe("VAST-IMA-Player", () => {
       imaPlayer.destroy();
       expect(collectedEvents).toEqual([
         'MediaStart',
-        'play',
-        'pause',
         ['AdStarted', 1, 0],
         'AdProgress',
         'AdPaused',

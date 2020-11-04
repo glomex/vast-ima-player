@@ -176,6 +176,7 @@ export class Player extends DelegatedEventTarget {
   #currentAd: google.ima.Ad;
   #mediaStartTriggered: boolean = false;
   #mediaImpressionTriggered: boolean = false;
+  #mediaInActivation: boolean = false;
   #customPlaybackTimeAdjustedOnEnded: boolean = false;
   #cuePoints: number[] = [];
   #adCurrentTime: number;
@@ -267,6 +268,7 @@ export class Player extends DelegatedEventTarget {
    * have to do async work before calling "playAds".
    */
   activate() {
+    this.#mediaInActivation = true;
     if (this.#mediaElement.paused) {
       // ignore play result
       try {
@@ -277,6 +279,12 @@ export class Player extends DelegatedEventTarget {
       }
     }
     this.#mediaElement.pause();
+    setTimeout(() => {
+      // On next tick the event play / playing / pause will already be done
+      // for the activation. We don't want to expose the activation detail
+      // to the outside.
+      this.#mediaInActivation = false;
+    }, 1);
     this.#adDisplayContainer.initialize();
   }
 
@@ -640,7 +648,9 @@ export class Player extends DelegatedEventTarget {
       this.#height = offsetHeight;
       this._resizeAdsManager();
     }
-    this.dispatchEvent(new CustomEvent(event.type));
+    if (!this.#mediaInActivation) {
+      this.dispatchEvent(new CustomEvent(event.type));
+    }
   }
 
   private _handleAdsManagerEvents(event: google.ima.AdEvent) {
