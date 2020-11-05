@@ -582,7 +582,9 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _handleMediaElementEvents(event: Event) {
-    if (!this.#customPlayhead.enabled) return;
+    const forwardVolumeChangeForCustomPlayback = this.isCustomPlaybackUsed()
+      && event.type === 'volumechange';
+    if (!this.#customPlayhead.enabled && !forwardVolumeChangeForCustomPlayback) return;
 
     if (event.type === 'timeupdate') {
       // ignoring first timeupdate after play
