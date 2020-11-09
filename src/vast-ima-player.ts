@@ -514,6 +514,11 @@ export class Player extends DelegatedEventTarget {
         this.#adsManager = undefined;
       }
     };
+    if (force) {
+      this.#mediaImpressionTriggered = false;
+      this.#mediaStartTriggered = false;
+      this.#customPlaybackTimeAdjustedOnEnded = false;
+    }
     this._resetAd();
     this.#cuePoints = [];
     this.#startAdCallback = undefined;
