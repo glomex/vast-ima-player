@@ -174,6 +174,7 @@ export class Player extends DelegatedEventTarget {
   #playerOptions: PlayerOptions;
   #resizeObserver: any;
   #currentAd: google.ima.Ad;
+  #loadedAd: google.ima.Ad;
   #mediaStartTriggered: boolean = false;
   #mediaImpressionTriggered: boolean = false;
   #mediaInActivation: boolean = false;
@@ -671,9 +672,10 @@ export class Player extends DelegatedEventTarget {
         // In case of VMAP it could preload ads before the
         // actual ad break. For VMAP it allows starting the ad
         // on "AD_BREAK_READY" instead.
+        const loadedAd = event.getAd();
         if (this.#startAdCallback && this.#cuePoints.length === 0) {
           this.#startAdCallback({
-            ad: event.getAd(),
+            ad: loadedAd,
             start: () => {
               this._startAdsManager();
               this.#startAdCallback = undefined;
@@ -682,6 +684,8 @@ export class Player extends DelegatedEventTarget {
               this._startAdsManager();
             }
           });
+        } else {
+          this.#loadedAd = loadedAd;
         }
         break;
       case AdEvent.Type.AD_BREAK_READY:
@@ -689,6 +693,7 @@ export class Player extends DelegatedEventTarget {
         // for a VMAP schedule
         if (this.#startAdCallback) {
           this.#startAdCallback({
+            ad: this.#loadedAd,
             adBreakTime: event.getAdData().adBreakTime,
             start: () => {
               this._startAdsManager();
@@ -700,6 +705,7 @@ export class Player extends DelegatedEventTarget {
               this._startAdsManager();
             }
           });
+          this.#loadedAd = undefined;
         } else {
           this._startAdsManager();
         }
