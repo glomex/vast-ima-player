@@ -45,6 +45,7 @@ export class CustomPlayhead {
   }
 
   disable() {
+    if (!this.#enabled) return;
     this.#mediaElement.removeEventListener('seeking', this._onSeeking);
     this.#mediaElement.removeEventListener('seeked', this._onSeeked);
     this.#mediaElement.removeEventListener('timeupdate', this._onTimeupdate);

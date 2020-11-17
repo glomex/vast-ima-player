@@ -233,9 +233,11 @@ export class Player extends DelegatedEventTarget {
       );
     });
 
+    this._onAdsManagerLoaded = this._onAdsManagerLoaded.bind(this);
+
     this.#adsLoader.addEventListener(
       this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-      (event) => this._onAdsManagerLoaded(event),
+      this._onAdsManagerLoaded,
       false
     );
     this.#adsLoader.addEventListener(
@@ -558,6 +560,11 @@ export class Player extends DelegatedEventTarget {
         eventName, this._handleMediaElementEvents
       );
     });
+    this.#adsLoader.removeEventListener(
+      this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+      this._onAdsManagerLoaded,
+      false
+    );
     this.#adDisplayContainer.destroy();
     this.#adsLoader.destroy();
     this.#mediaImpressionTriggered = false;
