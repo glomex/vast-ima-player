@@ -385,9 +385,8 @@ export class Player extends DelegatedEventTarget {
   set volume(volume: number) {
     if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.setVolume(volume);
-    } else {
-      this.#mediaElement.volume = volume;
     }
+    this.#mediaElement.volume = volume;
   }
 
   /**
@@ -408,9 +407,8 @@ export class Player extends DelegatedEventTarget {
       // ignoring the fact that there is a separate
       // muted flag on the media element
       this.#adsManager.setVolume(muted ? 0 : 1);
-    } else {
-      this.#mediaElement.muted = muted;
     }
+    this.#mediaElement.muted = muted;
   }
 
   /**
