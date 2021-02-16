@@ -205,7 +205,12 @@ describe("VAST-IMA-Player", () => {
       imaPlayer.pause();
       // jump after second midroll and shortly in front of end
       imaPlayer.currentTime = (imaPlayer.duration - 1);
-      imaPlayer.play();
+      // to prevent Unhandled promise rejection:
+      // AbortError: The play() request was interrupted by a call to pause().
+      // https://goo.gl/LdLk22
+      setTimeout(() => {
+        imaPlayer.play();
+      }, 1);
     });
     imaPlayer.addEventListener('AdStarted', (event) => {
       collectedEvents.push([

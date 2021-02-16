@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import type { ImaSdk } from '@alugha/ima';
+import type { ImaSdk, google } from '@alugha/ima';
 import CustomEvent from '@ungap/custom-event';
 import { CustomPlayhead } from './custom-playhead';
 import { DelegatedEventTarget } from './delegated-event-target';
@@ -525,7 +525,7 @@ export class Player extends DelegatedEventTarget {
     this.#cuePoints = [];
     this.#startAdCallback = undefined;
     if (isSpecialReset) {
-      return new Promise((resolve) => {
+      return new Promise<void>((resolve) => {
         // On iOS with single video tag we first need to
         // finish "adsManager.stop" during ad-playback to get back
         // to the content before calling "adsManager.destroy".
