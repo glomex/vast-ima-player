@@ -184,6 +184,7 @@ export class Player extends DelegatedEventTarget {
   #adDuration: number;
   #startAdCallback: StartAdCallback;
   #requestAdsTimeout: number;
+  #wasExternallyPaused: boolean = false;
 
   constructor(
     ima: ImaSdk,
@@ -361,6 +362,7 @@ export class Player extends DelegatedEventTarget {
    * Starts playback of either content or ad element.
    */
   play() {
+    this.#wasExternallyPaused = false;
     if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.resume();
     } else {
@@ -372,6 +374,7 @@ export class Player extends DelegatedEventTarget {
    * Pauses playback of either content or ad element.
    */
   pause() {
+    this.#wasExternallyPaused = true;
     if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.pause();
     } else {
@@ -523,6 +526,7 @@ export class Player extends DelegatedEventTarget {
     }
     this._resetAd();
     this.#cuePoints = [];
+    this.#wasExternallyPaused = false;
     this.#startAdCallback = undefined;
     if (isSpecialReset) {
       return new Promise<void>((resolve) => {
@@ -738,6 +742,9 @@ export class Player extends DelegatedEventTarget {
           this.#adCurrentTime = 0;
         }
         this.#adElement.style.display = '';
+        if (this.#wasExternallyPaused) {
+          this.pause();
+        }
         break;
       case AdEvent.Type.ALL_ADS_COMPLETED:
         if (this.#customPlaybackTimeAdjustedOnEnded) {
@@ -984,9 +991,14 @@ export class Player extends DelegatedEventTarget {
 
   private _playContent() {
     this.#adElement.style.display = 'none';
+
     if (!this.#mediaElement.ended) {
       this.#customPlayhead.enable();
-      this.#mediaElement.play();
+      if (!this.#wasExternallyPaused) {
+        this.play();
+      } else {
+        this.#wasExternallyPaused = false;
+      }
     }
   }
 
