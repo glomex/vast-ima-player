@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import type { ImaSdk } from '@alugha/ima';
+import type { ImaSdk, google } from '@alugha/ima';
 import CustomEvent from '@ungap/custom-event';
 import { CustomPlayhead } from './custom-playhead';
 import { DelegatedEventTarget } from './delegated-event-target';
@@ -184,6 +184,7 @@ export class Player extends DelegatedEventTarget {
   #adDuration: number;
   #startAdCallback: StartAdCallback;
   #requestAdsTimeout: number;
+  #wasExternallyPaused: boolean = false;
 
   constructor(
     ima: ImaSdk,
@@ -361,6 +362,7 @@ export class Player extends DelegatedEventTarget {
    * Starts playback of either content or ad element.
    */
   play() {
+    this.#wasExternallyPaused = false;
     if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.resume();
     } else {
@@ -372,6 +374,7 @@ export class Player extends DelegatedEventTarget {
    * Pauses playback of either content or ad element.
    */
   pause() {
+    this.#wasExternallyPaused = true;
     if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.pause();
     } else {
@@ -523,9 +526,10 @@ export class Player extends DelegatedEventTarget {
     }
     this._resetAd();
     this.#cuePoints = [];
+    this.#wasExternallyPaused = false;
     this.#startAdCallback = undefined;
     if (isSpecialReset) {
-      return new Promise((resolve) => {
+      return new Promise<void>((resolve) => {
         // On iOS with single video tag we first need to
         // finish "adsManager.stop" during ad-playback to get back
         // to the content before calling "adsManager.destroy".
@@ -738,6 +742,9 @@ export class Player extends DelegatedEventTarget {
           this.#adCurrentTime = 0;
         }
         this.#adElement.style.display = '';
+        if (this.#wasExternallyPaused) {
+          this.pause();
+        }
         break;
       case AdEvent.Type.ALL_ADS_COMPLETED:
         if (this.#customPlaybackTimeAdjustedOnEnded) {
@@ -984,9 +991,14 @@ export class Player extends DelegatedEventTarget {
 
   private _playContent() {
     this.#adElement.style.display = 'none';
+
     if (!this.#mediaElement.ended) {
       this.#customPlayhead.enable();
-      this.#mediaElement.play();
+      if (!this.#wasExternallyPaused) {
+        this.play();
+      } else {
+        this.#wasExternallyPaused = false;
+      }
     }
   }
 
