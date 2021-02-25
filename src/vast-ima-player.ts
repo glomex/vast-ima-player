@@ -340,6 +340,14 @@ export class Player extends DelegatedEventTarget {
       adsRequest.nonLinearAdSlotWidth = this.#width;
       adsRequest.nonLinearAdSlotHeight = this.#height;
 
+      // see version 3.442.0 changelog about postroll prefetching
+      // fixes issue with a disappearing nonlinear preroll that gets
+      // followed by a linear postroll
+      // https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side/history
+      if (adsRequest.contentDuration == null) {
+        adsRequest.contentDuration = -3;
+      }
+
       // trigger an error after 5s in case adsManagerLoaded
       // does not come up, so that content playback starts
       this.#requestAdsTimeout = window.setTimeout(() => {
