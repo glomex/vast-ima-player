@@ -751,7 +751,8 @@ export class Player extends DelegatedEventTarget {
         }
         this.#adElement.style.display = '';
         if (this.#wasExternallyPaused) {
-          this.pause();
+          this.#wasExternallyPaused = false;
+          this.#adsManager.pause();
         }
         break;
       case AdEvent.Type.ALL_ADS_COMPLETED:
@@ -1003,10 +1004,13 @@ export class Player extends DelegatedEventTarget {
     if (!this.#mediaElement.ended) {
       this.#customPlayhead.enable();
       if (!this.#wasExternallyPaused) {
-        this.play();
+        this.#mediaElement.play();
       } else {
-        this.#wasExternallyPaused = false;
+        this.#mediaElement.pause();
+        // somehow the above "pause()" does not send out pause event
+        this.dispatchEvent(new CustomEvent('pause'));
       }
+      this.#wasExternallyPaused = false
     }
   }
 
