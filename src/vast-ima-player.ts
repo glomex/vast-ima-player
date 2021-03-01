@@ -272,7 +272,7 @@ export class Player extends DelegatedEventTarget {
    * have to do async work before calling "playAds".
    */
   activate() {
-    if (this.#mediaStartTriggered) return;
+    if (this.#mediaStartTriggered || this.#mediaInActivation) return;
     this.#mediaInActivation = true;
     if (this.#mediaElement.paused) {
       // ignore play result
