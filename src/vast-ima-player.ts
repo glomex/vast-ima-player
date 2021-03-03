@@ -5,8 +5,8 @@ import { CustomPlayhead } from './custom-playhead';
 import { DelegatedEventTarget } from './delegated-event-target';
 
 const IGNORE_UNTIL_CURRENT_TIME = 0.5;
-const REQUEST_ADS_TIMEOUT = 5000;
-const REQUEST_ADS_TIMEOUT_ERROR = 9000;
+const ADS_MANAGER_LOADED_TIMEOUT = 5000;
+const REQUEST_ADS_TIMEOUT = 10000;
 const MEDIA_ELEMENT_EVENTS = [
   'abort', 'canplay', 'canplaythrough',
   'durationchange', 'emptied', 'ended',
@@ -143,6 +143,9 @@ export class PlayerError extends Error {
   type: string;
   vastErrorCode: number;
 
+  static ERROR_CODE_ADS_MANAGER_LOADED_TIMEOUT = 9000;
+  static ERROR_CODE_REQUEST_ADS_TIMEOUT = 9001;
+
   constructor(...args) {
     super(...args);
   }
@@ -183,6 +186,7 @@ export class Player extends DelegatedEventTarget {
   #adCurrentTime: number;
   #adDuration: number;
   #startAdCallback: StartAdCallback;
+  #adsManagerLoadedTimeout: number;
   #requestAdsTimeout: number;
   #wasExternallyPaused: boolean = false;
 
@@ -351,11 +355,19 @@ export class Player extends DelegatedEventTarget {
 
       // trigger an error after 5s in case adsManagerLoaded
       // does not come up, so that content playback starts
+      this.#adsManagerLoadedTimeout = window.setTimeout(() => {
+        const error = new PlayerError(`No adsManagerLoadedEvent within ${ADS_MANAGER_LOADED_TIMEOUT}ms.`);
+        error.errorCode = PlayerError.ERROR_CODE_ADS_MANAGER_LOADED_TIMEOUT;
+        this._onAdError(error);
+      }, ADS_MANAGER_LOADED_TIMEOUT);
+      // trigger an error when no error / ad break ready / ... event
+      // occurred within 5s after requesting ads
       this.#requestAdsTimeout = window.setTimeout(() => {
-        const error = new PlayerError(`No adsManagerLoadedEvent within ${REQUEST_ADS_TIMEOUT}ms.`);
-        error.errorCode = REQUEST_ADS_TIMEOUT_ERROR;
+        const error = new PlayerError(`No response for ads-request within ${REQUEST_ADS_TIMEOUT}ms.`);
+        error.errorCode = PlayerError.ERROR_CODE_REQUEST_ADS_TIMEOUT;
         this._onAdError(error);
       }, REQUEST_ADS_TIMEOUT);
+
       this.#adsLoader.requestAds(adsRequest);
     });
   }
@@ -593,6 +605,7 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _resetAd() {
+    window.clearTimeout(this.#adsManagerLoadedTimeout);
     window.clearTimeout(this.#requestAdsTimeout);
     this.#currentAd = undefined;
     this.#adCurrentTime = undefined;
@@ -868,7 +881,7 @@ export class Player extends DelegatedEventTarget {
 
   private _onAdsManagerLoaded(loadedEvent: google.ima.AdsManagerLoadedEvent) {
     const { AdEvent, AdErrorEvent: { Type: { AD_ERROR } } } = this.#ima;
-    window.clearTimeout(this.#requestAdsTimeout);
+    window.clearTimeout(this.#adsManagerLoadedTimeout);
     const adsManager = this.#adsManager = loadedEvent.getAdsManager(
       this.#customPlayhead, this.#adsRenderingSettings
     );
