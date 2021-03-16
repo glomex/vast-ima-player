@@ -289,9 +289,6 @@ export class Player extends DelegatedEventTarget {
     }
     this.#mediaElement.pause();
     setTimeout(() => {
-      // pause() again a little later after calling "play()"
-      // so that the pause works on Safari
-      this.#mediaElement.pause();
       // On next tick the event play / playing / pause will already be done
       // for the activation. We don't want to expose the activation detail
       // to the outside.
