@@ -619,9 +619,8 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _handleMediaElementEvents(event: Event) {
-    const forwardVolumeChangeForCustomPlayback = this.isCustomPlaybackUsed()
-      && event.type === 'volumechange';
-    if (!this.#customPlayhead.enabled && !forwardVolumeChangeForCustomPlayback) return;
+    // always forward volumechange events
+    if (!this.#customPlayhead.enabled && event.type !== 'volumechange') return;
 
     if (event.type === 'timeupdate') {
       // ignoring first timeupdate after play
@@ -687,7 +686,7 @@ export class Player extends DelegatedEventTarget {
       this.#height = offsetHeight;
       this._resizeAdsManager();
     }
-    if (!this.#mediaInActivation) {
+    if (!this.#mediaInActivation || event.type === 'volumechange') {
       this.dispatchEvent(new CustomEvent(event.type));
     }
   }
