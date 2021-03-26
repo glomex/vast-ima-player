@@ -646,7 +646,7 @@ export class Player extends DelegatedEventTarget {
       }
     }
     if (event.type === 'play'
-      && !this.#mediaStartTriggered
+      && !this.#mediaStartTriggered && !this.#mediaInActivation
     ) {
       this.dispatchEvent(
         new CustomEvent(PlayerEvent.MEDIA_START)
