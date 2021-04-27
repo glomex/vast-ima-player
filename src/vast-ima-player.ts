@@ -1017,6 +1017,7 @@ export class Player extends DelegatedEventTarget {
       this.#customPlayhead.enable();
       if (!this.#wasExternallyPaused) {
         this.#mediaElement.play();
+        this.dispatchEvent(new CustomEvent('play'));
       } else {
         this.#mediaElement.pause();
         // somehow the above "pause()" does not send out pause event
