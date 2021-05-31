@@ -176,6 +176,7 @@ describe("VAST-IMA-Player", () => {
         'AdResumed',
         ['AdComplete', 1, 1],
         'play',
+        'play',
         ['MediaImpression', 23, 0],
         'timeupdate',
         'pause',
