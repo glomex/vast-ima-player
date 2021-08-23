@@ -124,6 +124,7 @@ describe("VAST-IMA-Player", () => {
     playAdsRequest.adTagUrl = 'https://glomex.github.io/vast-ima-player/linear-ad-1s.xml';
     const collectedEvents = [];
     imaPlayer.addEventListener('MediaStart', () => collectedEvents.push('MediaStart'));
+    imaPlayer.addEventListener('MediaResumed', () => collectedEvents.push('MediaResumed'));
     imaPlayer.addEventListener('MediaImpression', () => {
       collectedEvents.push([
         'MediaImpression',
@@ -176,6 +177,7 @@ describe("VAST-IMA-Player", () => {
         'AdResumed',
         ['AdComplete', 1, 1],
         'play',
+        'MediaResumed',
         'play',
         ['MediaImpression', 23, 0],
         'timeupdate',
@@ -201,6 +203,7 @@ describe("VAST-IMA-Player", () => {
     playAdsRequest.adsResponse = vmapWithPreMidAndPostroll;
     const collectedEvents = [];
     imaPlayer.addEventListener('MediaStart', () => collectedEvents.push('MediaStart'));
+    imaPlayer.addEventListener('MediaResumed', () => collectedEvents.push('MediaResumed'));
     imaPlayer.addEventListener('MediaImpression', () => {
       collectedEvents.push('MediaImpression');
       imaPlayer.pause();
@@ -252,10 +255,12 @@ describe("VAST-IMA-Player", () => {
         ['AdComplete', 2, 1, 'preroll-1', 0],
         ['AdStarted', 2, 2, 'preroll-2', 0],
         ['AdComplete', 2, 2, 'preroll-2', 0],
+        'MediaResumed',
         'MediaImpression',
         ['MediaCuePointsChange', [5, -1]],
         ['AdStarted', 1, 1, 'midroll-2', 10],
         ['AdComplete', 1, 1, 'midroll-2', 10],
+        'MediaResumed',
         'ended',
         ['MediaCuePointsChange', [5]],
         ['AdStarted', 1, 1, 'postroll', -1],
