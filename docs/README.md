@@ -24,7 +24,7 @@ This library focuses on managing the actual media monetization lifecycle and on 
 
 * Only relies on HTMLMediaElement and can be used in combination with e.g. [HLS.js](https://github.com/video-dev/hls.js/) or [Shaka Player](https://github.com/google/shaka-player).
 * Does not provide any additional video-player UI. The consumer should be able to decide whether to use the native controls or to design their own.
-* Provides additional events to manage the video-monetization lifecycle: `MediaStart`, `MediaImpression`, `MediaStop` and `MediaCuePointsChange`.
+* Provides additional events to manage the video-monetization lifecycle: `MediaStart`, `MediaImpression`, `MediaStop`, `MediaResumed` (a CONTENT_RESUME_REQUESTED event that is not triggered before preroll) and `MediaCuePointsChange`.
 * Proxies HTMLMediaElement events (`timeupdate`, `play`, `pause`, ...) and properties (`currentTime`, `volume`, ...) through the VAST-IMA-Player API so that the consumer does not have to implement ad & content switching in their code. On iPhone the IMA defaults to use a single video tag to play back ad and content and VAST-IMA-Player ensures that the consumer receives the appropriate ad or content data.
 * Proxies the properties `volume`, `muted`, `currentTime` and `duration` and provides proxy methods for `play()` and `pause()`.
 * Prefixes all IMA events with `Ad` so that they are more aligned with the [VPAID 2.0 standard](https://www.iab.com/wp-content/uploads/2015/06/VPAID_2_0_Final_04-10-2012.pdf).

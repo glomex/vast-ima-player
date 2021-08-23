@@ -29,7 +29,13 @@ enum AdditionalMediaEvent {
   /** Fired when the media file playback finished after potential postroll. */
   MEDIA_STOP = 'MediaStop',
   /** Fired when ad break cue points change. */
-  MEDIA_CUE_POINTS_CHANGE = 'MediaCuePointsChange'
+  MEDIA_CUE_POINTS_CHANGE = 'MediaCuePointsChange',
+  /**
+   * Fired when media resumes playback. CONTENT_RESUME_REQUESTED
+   * is sometimes triggered before playback and this event is only
+   * triggered after ad is finished or when content resumes.
+   */
+  MEDIA_RESUMED = 'MediaResumed'
 }
 
 /**
@@ -1018,6 +1024,7 @@ export class Player extends DelegatedEventTarget {
       if (!this.#wasExternallyPaused) {
         this.#mediaElement.play();
         this.dispatchEvent(new CustomEvent('play'));
+        this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_RESUMED));
       } else {
         this.#mediaElement.pause();
         // somehow the above "pause()" does not send out pause event
