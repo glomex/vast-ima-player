@@ -195,6 +195,7 @@ export class Player extends DelegatedEventTarget {
   #adsManagerLoadedTimeout: number;
   #requestAdsTimeout: number;
   #wasExternallyPaused: boolean = false;
+  #lastNonZeroAdVolume: number = 1;
 
   constructor(
     ima: ImaSdk,
@@ -433,9 +434,7 @@ export class Player extends DelegatedEventTarget {
    */
   set muted(muted: boolean) {
     if (!this.#customPlayhead.enabled && this.#adsManager) {
-      // ignoring the fact that there is a separate
-      // muted flag on the media element
-      this.#adsManager.setVolume(muted ? 0 : 1);
+      this.#adsManager.setVolume(muted ? 0 : this.#lastNonZeroAdVolume);
     }
     this.#mediaElement.muted = muted;
   }
@@ -816,8 +815,8 @@ export class Player extends DelegatedEventTarget {
             this.#mediaElement.muted = true;
           } else {
             this.#mediaElement.muted = false;
-            this.#mediaElement.volume = this.#adsManager.getVolume();
           }
+          this.#mediaElement.volume = this.#lastNonZeroAdVolume;
         }
         if (this.#customPlaybackTimeAdjustedOnEnded) {
           // Fixing the issue on iOS and postroll where we have to
@@ -879,6 +878,12 @@ export class Player extends DelegatedEventTarget {
           })
         } else if (adData.adError && !this.#currentAd) {
           this._playContent();
+        }
+        break;
+      case AdEvent.Type.VOLUME_CHANGED:
+        const currentVolume = this.#adsManager.getVolume();
+        if (currentVolume > 0) {
+          this.#lastNonZeroAdVolume = currentVolume;
         }
         break;
     }
