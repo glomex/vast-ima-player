@@ -385,6 +385,12 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  discardAdBreak() {
+    if (this.#adsManager) {
+      this.#adsManager.discardAdBreak();
+    }
+  }
+
   /**
    * Starts playback of either content or ad element.
    */
