@@ -16,6 +16,7 @@ const MEDIA_ELEMENT_EVENTS = [
   'seeking', 'stalled', 'suspend', 'timeupdate',
   'volumechange', 'waiting'
 ];
+const WAIT_FOR_NO_AD_START_AFTER_UNMUTE = 250;
 
 /**
  * Additional media events that help managing the
@@ -196,6 +197,7 @@ export class Player extends DelegatedEventTarget {
   #requestAdsTimeout: number;
   #wasExternallyPaused: boolean = false;
   #lastNonZeroAdVolume: number = 1;
+  #replayUnmutedVpaidTimeoutId: number;
 
   constructor(
     ima: ImaSdk,
@@ -752,6 +754,7 @@ export class Player extends DelegatedEventTarget {
         }
         break;
       case AdEvent.Type.STARTED:
+        window.clearTimeout(this.#replayUnmutedVpaidTimeoutId);
         const ad = this.#currentAd = event.getAd();
         // when playing an ad-pod IMA uses two video-tags
         // and switches between those but does not set volume
@@ -866,6 +869,11 @@ export class Player extends DelegatedEventTarget {
         break;
       case AdEvent.Type.AD_PROGRESS:
         const adDataProgress = event.getAdData();
+        if (this.volume > 0
+          && this.#adCurrentTime === adDataProgress.currentTime
+        ) {
+          this._replayUnmutedVpaid();
+        }
         this.#adCurrentTime = adDataProgress.currentTime;
         this.#adDuration = adDataProgress.duration;
         break;
@@ -890,9 +898,35 @@ export class Player extends DelegatedEventTarget {
         const currentVolume = this.#adsManager.getVolume();
         if (currentVolume > 0) {
           this.#lastNonZeroAdVolume = currentVolume;
+          if (!this.#wasExternallyPaused) {
+            this.#replayUnmutedVpaidTimeoutId = window.setTimeout(() => {
+              this._replayUnmutedVpaid();
+            }, WAIT_FOR_NO_AD_START_AFTER_UNMUTE);
+          }
         }
         break;
     }
+  }
+
+  /**
+   * VPAIDs (content-type = "application/javascript") can unmute
+   * an ad before the actual start and during playback without
+   * interaction from the player.
+   *
+   * We try to mute, pause and resume the playback.
+   */
+  private _replayUnmutedVpaid() {
+    if (!this.#currentAd
+      || this.#currentAd.getContentType() !== 'application/javascript'
+    ) {
+      return;
+    }
+    this.#adsManager.setVolume(0);
+    this.#adsManager.pause();
+    // wait a little until volume and pause events were sent
+    setTimeout(() => {
+      this.play();
+    }, 10);
   }
 
   private _onAdsManagerLoaded(loadedEvent: google.ima.AdsManagerLoadedEvent) {
