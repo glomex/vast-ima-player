@@ -764,6 +764,8 @@ export class Player extends DelegatedEventTarget {
         if (ad.getAdPodInfo().getAdPosition() > 1) {
           this.#adsManager.setVolume(this.#adsManager.getVolume());
         }
+        // @ts-ignore
+        ad.started = true;
         this.#adElement.classList.remove('nonlinear');
         this._resizeAdsManager();
         // single or non-linear ads
@@ -869,6 +871,10 @@ export class Player extends DelegatedEventTarget {
         break;
       case AdEvent.Type.AD_PROGRESS:
         const adDataProgress = event.getAdData();
+        // when VPAID unmutes itself during already
+        // started ad it does not pause the ad and
+        // continues progress when unmuting requires
+        // user interaction
         if (this.volume > 0
           && this.#adCurrentTime === adDataProgress.currentTime
         ) {
@@ -903,7 +909,8 @@ export class Player extends DelegatedEventTarget {
         const currentVolume = this.#adsManager.getVolume();
         if (currentVolume > 0) {
           this.#lastNonZeroAdVolume = currentVolume;
-          if (!this.#wasExternallyPaused) {
+          // @ts-ignore
+          if (!this.#wasExternallyPaused && this.#currentAd && !this.#currentAd.started) {
             this.#replayUnmutedVpaidTimeoutId = window.setTimeout(() => {
               this._replayUnmutedVpaid();
             }, WAIT_FOR_NO_AD_START_AFTER_UNMUTE);
