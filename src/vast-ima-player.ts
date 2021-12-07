@@ -894,6 +894,11 @@ export class Player extends DelegatedEventTarget {
           this._playContent();
         }
         break;
+      case AdEvent.Type.PAUSED:
+        // just in case IMA will properly trigger pause
+        // when unmute was not successful during VPAID ad
+        window.clearTimeout(this.#replayUnmutedVpaidTimeoutId);
+        break;
       case AdEvent.Type.VOLUME_CHANGED:
         const currentVolume = this.#adsManager.getVolume();
         if (currentVolume > 0) {
