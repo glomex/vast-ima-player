@@ -49,7 +49,7 @@
     "@ungap/custom-event": "^0.3.1",
     "form-to-object": "^6.0.0",
     "jasmine": "^3.6.4",
-    "karma": "^6.1.1",
+    "karma": "^6.3.11",
     "karma-chrome-launcher": "^3.1.0",
     "karma-firefox-launcher": "^2.1.0",
     "karma-jasmine": "^4.0.1",
