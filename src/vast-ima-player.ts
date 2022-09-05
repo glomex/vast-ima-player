@@ -315,7 +315,6 @@ export class Player extends DelegatedEventTarget {
   playAds(adsRequest: google.ima.AdsRequest) {
     this.#ima.settings.setAutoPlayAdBreaks(true);
     this._requestAds(adsRequest);
-    this.activate();
   }
 
   /**
