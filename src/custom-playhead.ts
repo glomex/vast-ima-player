@@ -2,12 +2,12 @@
  * Improved version of: https://developers.google.com/interactive-media-ads/docs/sdks/html5/ad-rules#known-issues-with-mobile-safari
  */
 export class CustomPlayhead {
-  #mediaElement: HTMLVideoElement;
-  #currentTime: number;
+  #mediaElement?: HTMLVideoElement;
+  #currentTime?: number;
   #enabled: boolean;
   seeking: boolean;
 
-  constructor(mediaElement) {
+  constructor(mediaElement: HTMLVideoElement) {
     this.#mediaElement = mediaElement;
     this.#currentTime = 0;
     this.#enabled = false;
@@ -27,8 +27,8 @@ export class CustomPlayhead {
   }
 
   private _onTimeupdate() {
-    if (!this.seeking && !this.#mediaElement.paused) {
-      this.#currentTime = this.#mediaElement.currentTime;
+    if (!this.seeking && !this.#mediaElement?.paused) {
+      this.#currentTime = this.#mediaElement?.currentTime;
     }
   }
 
@@ -38,17 +38,17 @@ export class CustomPlayhead {
 
   enable() {
     if (this.#enabled) return;
-    this.#mediaElement.addEventListener('seeking', this._onSeeking);
-    this.#mediaElement.addEventListener('seeked', this._onSeeked);
-    this.#mediaElement.addEventListener('timeupdate', this._onTimeupdate);
+    this.#mediaElement?.addEventListener('seeking', this._onSeeking);
+    this.#mediaElement?.addEventListener('seeked', this._onSeeked);
+    this.#mediaElement?.addEventListener('timeupdate', this._onTimeupdate);
     this.#enabled = true;
   }
 
   disable() {
     if (!this.#enabled) return;
-    this.#mediaElement.removeEventListener('seeking', this._onSeeking);
-    this.#mediaElement.removeEventListener('seeked', this._onSeeked);
-    this.#mediaElement.removeEventListener('timeupdate', this._onTimeupdate);
+    this.#mediaElement?.removeEventListener('seeking', this._onSeeking);
+    this.#mediaElement?.removeEventListener('seeked', this._onSeeked);
+    this.#mediaElement?.removeEventListener('timeupdate', this._onTimeupdate);
     this.#enabled = false;
   }
 
@@ -57,23 +57,25 @@ export class CustomPlayhead {
   }
 
   get duration() {
-    return this.#mediaElement.duration;
+    return this.#mediaElement?.duration;
   }
 
   get muted() {
-    return this.#mediaElement.muted;
+    return this.#mediaElement?.muted;
   }
 
   get volume() {
-    return this.#mediaElement.volume;
+    return this.#mediaElement?.volume;
   }
 
   play() {
-    this.#mediaElement.play();
+    return new Promise((resolve) => {
+      resolve(this.#mediaElement?.play());
+    });
   }
 
   pause() {
-    this.#mediaElement.pause();
+    this.#mediaElement?.pause();
   }
 
   reset() {
@@ -84,6 +86,9 @@ export class CustomPlayhead {
   }
 
   destroy() {
+    this.#currentTime = 0;
+    this.#enabled = false;
+    this.seeking = false;
     this.disable();
     this.#mediaElement = undefined;
   }

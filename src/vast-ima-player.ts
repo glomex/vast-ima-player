@@ -196,6 +196,7 @@ export class Player extends DelegatedEventTarget {
   #requestAdsTimeout: number;
   #wasExternallyPaused: boolean = false;
   #lastNonZeroAdVolume: number = 1;
+  #activatePromise = Promise.resolve();
 
   constructor(
     ima: ImaSdk,
@@ -286,21 +287,19 @@ export class Player extends DelegatedEventTarget {
     if (this.#mediaStartTriggered || this.#mediaInActivation) return;
     this.#mediaInActivation = true;
     if (this.#mediaElement.paused) {
-      // ignore play result
-      try {
-        // always calling play to trigger a fresh MediaStart
-        this.#mediaElement.play().catch(() => undefined);
-      } catch(e) {
-        // ignore
-      }
+      const ready = () => {
+        this.#mediaElement.pause();
+        setTimeout(() => {
+          // We don't want to expose the activation detail
+          // to the outside and ignore events during activation phase.
+          // Waiting a little so that "pause" got emitted from above pause() call
+          this.#mediaInActivation = false;
+        }, 1);
+      };
+      this.#activatePromise = new Promise(
+        (resolve) => resolve(this.#mediaElement.play())
+      ).then(ready).catch(ready);
     }
-    this.#mediaElement.pause();
-    setTimeout(() => {
-      // On next tick the event play / playing / pause will already be done
-      // for the activation. We don't want to expose the activation detail
-      // to the outside.
-      this.#mediaInActivation = false;
-    }, 1);
     this.#adDisplayContainer.initialize();
   }
 
@@ -333,6 +332,12 @@ export class Player extends DelegatedEventTarget {
   ) {
     this.#ima.settings.setAutoPlayAdBreaks(false);
     this._requestAds(adsRequest, startAdCallback);
+  }
+
+  private _mediaElementPlay() {
+    return this.#activatePromise.then(() => new Promise(
+      (resolve) => resolve(this.#mediaElement.play())
+    ));
   }
 
   private _requestAds(
@@ -398,7 +403,14 @@ export class Player extends DelegatedEventTarget {
     if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.resume();
     } else {
-      this.#mediaElement.play();
+      this._mediaElementPlay()
+        .then(() => {
+          // empty
+        })
+        .catch(() => {
+          // just in case we don't receive a "pause" event
+          this.dispatchEvent(new CustomEvent('pause'));
+        });
     }
   }
 
@@ -585,9 +597,7 @@ export class Player extends DelegatedEventTarget {
    */
   destroy() {
     this.reset();
-    if (this.#customPlayhead) {
-      this.#customPlayhead.destroy();
-    }
+    this.#customPlayhead.destroy();
     MEDIA_ELEMENT_EVENTS.forEach((eventName) => {
       this.#mediaElement.removeEventListener(
         eventName, this._handleMediaElementEvents
@@ -1032,7 +1042,14 @@ export class Player extends DelegatedEventTarget {
     if (!this.#mediaElement.ended) {
       this.#customPlayhead.enable();
       if (!this.#wasExternallyPaused) {
-        this.#mediaElement.play();
+        this._mediaElementPlay()
+          .then(() => {
+            // empty
+          })
+          .catch(() => {
+            // just in case we don't receive a "pause" event
+            this.dispatchEvent(new CustomEvent('pause'));
+          });
         this.dispatchEvent(new CustomEvent('play'));
         this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_RESUMED));
       } else {
