@@ -289,12 +289,16 @@ export class Player extends DelegatedEventTarget {
     if (this.#mediaElement.paused) {
       const ready = () => {
         this.#mediaElement.pause();
-        setTimeout(() => {
-          // We don't want to expose the activation detail
-          // to the outside and ignore events during activation phase.
-          // Waiting a little so that "pause" got emitted from above pause() call
-          this.#mediaInActivation = false;
-        }, 1);
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            // We don't want to expose the activation detail
+            // to the outside and ignore events during activation phase.
+            // Waiting a little so that "pause" got emitted from above pause() call
+            this.#mediaInActivation = false;
+            resolve();
+          }, 1);
+        });
+
       };
       this.#activatePromise = new Promise(
         (resolve) => resolve(this.#mediaElement.play())
