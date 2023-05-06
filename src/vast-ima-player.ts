@@ -662,10 +662,8 @@ export class Player extends DelegatedEventTarget {
         // without emitting an event for it
         this._adjustCuePoints(cuePointToRemove);
       }
-      if (!this.#mediaImpressionTriggered) {
-        this.dispatchEvent(
-          new CustomEvent(PlayerEvent.MEDIA_IMPRESSION)
-        );
+      if (!this.#mediaImpressionTriggered && this.#mediaStartTriggered) {
+        this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_IMPRESSION));
         this.#mediaImpressionTriggered = true;
       }
     }
