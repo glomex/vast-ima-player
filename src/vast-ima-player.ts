@@ -1,4 +1,5 @@
 /* tslint:disable:max-classes-per-file */
+
 import type { ImaSdk, google } from '@alugha/ima';
 import CustomEvent from '@ungap/custom-event';
 import { CustomPlayhead } from './custom-playhead';
@@ -8,13 +9,28 @@ const IGNORE_UNTIL_CURRENT_TIME = 0.5;
 const ADS_MANAGER_LOADED_TIMEOUT = 5000;
 const REQUEST_ADS_TIMEOUT = 10000;
 const MEDIA_ELEMENT_EVENTS = [
-  'abort', 'canplay', 'canplaythrough',
-  'durationchange', 'emptied', 'ended',
-  'error', 'loadeddata', 'loadedmetadata',
-  'loadstart', 'pause', 'play', 'playing',
-  'progress', 'ratechange', 'seeked',
-  'seeking', 'stalled', 'suspend', 'timeupdate',
-  'volumechange', 'waiting'
+  'abort',
+  'canplay',
+  'canplaythrough',
+  'durationchange',
+  'emptied',
+  'ended',
+  'error',
+  'loadeddata',
+  'loadedmetadata',
+  'loadstart',
+  'pause',
+  'play',
+  'playing',
+  'progress',
+  'ratechange',
+  'seeked',
+  'seeking',
+  'stalled',
+  'suspend',
+  'timeupdate',
+  'volumechange',
+  'waiting'
 ];
 
 /**
@@ -131,7 +147,7 @@ type PlayerEvent = AdditionalMediaEvent | ImaToAdEventMap;
  */
 export const PlayerEvent = {
   ...ImaToAdEventMap,
-  ...AdditionalMediaEvent,
+  ...AdditionalMediaEvent
 };
 
 export class PlayerOptions {
@@ -140,7 +156,7 @@ export class PlayerOptions {
   /** Enables or disables auto resizing of adsManager. If enabled it also resizes non-linear ads. */
   autoResize: boolean = true;
   /** Allows to have a separate 'Learn More' click tracking element on mobile. */
-  clickTrackingElement?: HTMLElement
+  clickTrackingElement?: HTMLElement;
 }
 
 export class PlayerError extends Error {
@@ -158,10 +174,10 @@ export class PlayerError extends Error {
 }
 
 type StartAd = {
-  start: () => void,
-  startWithoutReset: () => void,
-  ad?: google.ima.Ad,
-  adBreakTime?: number
+  start: () => void;
+  startWithoutReset: () => void;
+  ad?: google.ima.Ad;
+  adBreakTime?: number;
 };
 
 type StartAdCallback = (startAd: StartAd) => void;
@@ -202,8 +218,7 @@ export class Player extends DelegatedEventTarget {
     ima: ImaSdk,
     mediaElement: HTMLVideoElement,
     adElement: HTMLElement,
-    adsRenderingSettings: google.ima.AdsRenderingSettings =
-      new ima.AdsRenderingSettings(),
+    adsRenderingSettings: google.ima.AdsRenderingSettings = new ima.AdsRenderingSettings(),
     options: PlayerOptions = new PlayerOptions()
   ) {
     super();
@@ -213,10 +228,12 @@ export class Player extends DelegatedEventTarget {
     this.#playerOptions = options;
     this.#adsRenderingSettings = adsRenderingSettings;
     // for iOS to reset to initial content state
-    this.#adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
+    this.#adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete =
+      true;
 
-    if (options.disableCustomPlaybackForIOS10Plus
-      && !this.#mediaElement.hasAttribute('playsinline')
+    if (
+      options.disableCustomPlaybackForIOS10Plus &&
+      !this.#mediaElement.hasAttribute('playsinline')
     ) {
       // assign "playsinline" when on iOS two video elements
       // will be used for content and ad playback
@@ -226,40 +243,18 @@ export class Player extends DelegatedEventTarget {
       options.disableCustomPlaybackForIOS10Plus
     );
 
-    this.#adDisplayContainer = new ima.AdDisplayContainer(
-      adElement,
-      // used as single element for linear ad playback on iOS
-      options.disableCustomPlaybackForIOS10Plus ? undefined : mediaElement,
-      // allows to override the 'Learn More' button on mobile
-      options.clickTrackingElement
-    );
-    this.#adElement.style.display = 'none';
-    this.#adsLoader = new ima.AdsLoader(this.#adDisplayContainer);
-
     // later used for to determine playhead for triggering midrolls
     // and to determine whether the player is currently playing content
     this.#customPlayhead = new CustomPlayhead(this.#mediaElement);
     this._handleMediaElementEvents = this._handleMediaElementEvents.bind(this);
     MEDIA_ELEMENT_EVENTS.forEach((eventName) => {
       this.#mediaElement.addEventListener(
-        eventName, this._handleMediaElementEvents
+        eventName,
+        this._handleMediaElementEvents
       );
     });
 
     this._onAdsManagerLoaded = this._onAdsManagerLoaded.bind(this);
-
-    this.#adsLoader.addEventListener(
-      this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-      this._onAdsManagerLoaded,
-      false
-    );
-    this.#adsLoader.addEventListener(
-      this.#ima.AdErrorEvent.Type.AD_ERROR,
-      (event) => {
-        this._onAdError(this._createPlayerErrorFromImaErrorEvent(event))
-      },
-      false
-    );
 
     // initial synchronization of width / height
     const { offsetHeight, offsetWidth } = this.#mediaElement;
@@ -270,8 +265,8 @@ export class Player extends DelegatedEventTarget {
       // @ts-ignore
       if (window.ResizeObserver) {
         // @ts-ignore
-        this.#resizeObserver = new window.ResizeObserver(
-          (entries) => this._resizeObserverCallback(entries)
+        this.#resizeObserver = new window.ResizeObserver((entries) =>
+          this._resizeObserverCallback(entries)
         );
         this.#resizeObserver.observe(this.#mediaElement);
       }
@@ -298,11 +293,12 @@ export class Player extends DelegatedEventTarget {
             resolve();
           }, 1);
         });
-
       };
-      this.#activatePromise = new Promise(
-        (resolve) => resolve(this.#mediaElement.play())
-      ).then(ready).catch(ready);
+      this.#activatePromise = new Promise((resolve) =>
+        resolve(this.#mediaElement.play())
+      )
+        .then(ready)
+        .catch(ready);
     }
     this.#adDisplayContainer.initialize();
   }
@@ -330,18 +326,15 @@ export class Player extends DelegatedEventTarget {
    * VAST ad or starts the VMAP ad break. If "start" method is not called
    * it won't play the ad.
    */
-  loadAds(
-    adsRequest: google.ima.AdsRequest,
-    startAdCallback: StartAdCallback
-  ) {
+  loadAds(adsRequest: google.ima.AdsRequest, startAdCallback: StartAdCallback) {
     this.#ima.settings.setAutoPlayAdBreaks(false);
     this._requestAds(adsRequest, startAdCallback);
   }
 
   private _mediaElementPlay() {
-    return this.#activatePromise.then(() => new Promise(
-      (resolve) => resolve(this.#mediaElement.play())
-    ));
+    return this.#activatePromise.then(
+      () => new Promise((resolve) => resolve(this.#mediaElement.play()))
+    );
   }
 
   private _requestAds(
@@ -371,14 +364,18 @@ export class Player extends DelegatedEventTarget {
       // trigger an error after 5s in case adsManagerLoaded
       // does not come up, so that content playback starts
       this.#adsManagerLoadedTimeout = window.setTimeout(() => {
-        const error = new PlayerError(`No adsManagerLoadedEvent within ${ADS_MANAGER_LOADED_TIMEOUT}ms.`);
+        const error = new PlayerError(
+          `No adsManagerLoadedEvent within ${ADS_MANAGER_LOADED_TIMEOUT}ms.`
+        );
         error.errorCode = PlayerError.ERROR_CODE_ADS_MANAGER_LOADED_TIMEOUT;
         this._onAdError(error);
       }, ADS_MANAGER_LOADED_TIMEOUT);
       // trigger an error when no error / ad break ready / ... event
       // occurred within 5s after requesting ads
       this.#requestAdsTimeout = window.setTimeout(() => {
-        const error = new PlayerError(`No response for ads-request within ${REQUEST_ADS_TIMEOUT}ms.`);
+        const error = new PlayerError(
+          `No response for ads-request within ${REQUEST_ADS_TIMEOUT}ms.`
+        );
         error.errorCode = PlayerError.ERROR_CODE_REQUEST_ADS_TIMEOUT;
         this._onAdError(error);
       }, REQUEST_ADS_TIMEOUT);
@@ -509,9 +506,11 @@ export class Player extends DelegatedEventTarget {
 
   private _setCuePoints(cuePoints: number[]) {
     this.#cuePoints = [...cuePoints];
-    this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_CUE_POINTS_CHANGE, {
-      detail: { cuePoints: [...this.#cuePoints] }
-    }));
+    this.dispatchEvent(
+      new CustomEvent(PlayerEvent.MEDIA_CUE_POINTS_CHANGE, {
+        detail: { cuePoints: [...this.#cuePoints] }
+      })
+    );
   }
 
   /**
@@ -520,9 +519,7 @@ export class Player extends DelegatedEventTarget {
    * @param timeOffset offset in seconds as defined in VMAP or 0 for preroll and -1 for postroll
    */
   private _adjustCuePoints(timeOffset) {
-    const cuePointIndex = this.cuePoints.indexOf(
-      timeOffset
-    );
+    const cuePointIndex = this.cuePoints.indexOf(timeOffset);
     if (cuePointIndex > -1) {
       this.#cuePoints.splice(cuePointIndex, 1);
       this._setCuePoints(this.#cuePoints);
@@ -553,18 +550,12 @@ export class Player extends DelegatedEventTarget {
    * @returns a promise which resolves after all the cleanup work is done
    */
   reset(force: boolean = false) {
-    const isSpecialReset = this.isCustomPlaybackUsed()
-      && this.#adsManager
-      && this.#currentAd
-      && this.#currentAd.isLinear()
-      && force;
-    const destroyAdsManager = () => {
-      if (this.#adsManager) {
-        this.#adsManager.destroy();
-        this.#adsLoader.contentComplete();
-        this.#adsManager = undefined;
-      }
-    };
+    const isSpecialReset =
+      this.isCustomPlaybackUsed() &&
+      this.#adsManager &&
+      this.#currentAd &&
+      this.#currentAd.isLinear() &&
+      force;
     if (force) {
       this.#mediaImpressionTriggered = false;
       this.#mediaStartTriggered = false;
@@ -584,16 +575,49 @@ export class Player extends DelegatedEventTarget {
         // is done resetting
         const onCanPlay = () => {
           this.#mediaElement.removeEventListener('canplay', onCanPlay);
-          destroyAdsManager();
+          this._resetIma();
           setTimeout(() => resolve(), 50);
-        }
+        };
         this.#adsManager.stop();
         this.#adsManager.discardAdBreak();
         this.#mediaElement.addEventListener('canplay', onCanPlay);
       });
     }
-    destroyAdsManager();
+    this._resetIma();
     return Promise.resolve();
+  }
+
+  private _resetIma() {
+    if (this.#adsManager) {
+      this.#adsManager.destroy();
+      this.#adsLoader.contentComplete();
+    }
+    this.#adsManager = undefined;
+    this.#adElement.innerHTML = '';
+    this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
+      this.#adElement,
+      // used as single element for linear ad playback on iOS
+      this.#playerOptions.disableCustomPlaybackForIOS10Plus
+        ? undefined
+        : this.#mediaElement,
+      // allows to override the 'Learn More' button on mobile
+      this.#playerOptions.clickTrackingElement
+    );
+    this.#adElement.style.display = 'none';
+    this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
+
+    this.#adsLoader.addEventListener(
+      this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+      this._onAdsManagerLoaded,
+      false
+    );
+    this.#adsLoader.addEventListener(
+      this.#ima.AdErrorEvent.Type.AD_ERROR,
+      (event) => {
+        this._onAdError(this._createPlayerErrorFromImaErrorEvent(event));
+      },
+      false
+    );
   }
 
   /**
@@ -604,7 +628,8 @@ export class Player extends DelegatedEventTarget {
     this.#customPlayhead.destroy();
     MEDIA_ELEMENT_EVENTS.forEach((eventName) => {
       this.#mediaElement.removeEventListener(
-        eventName, this._handleMediaElementEvents
+        eventName,
+        this._handleMediaElementEvents
       );
     });
     this.#adsLoader.removeEventListener(
@@ -624,8 +649,10 @@ export class Player extends DelegatedEventTarget {
 
   isCustomPlaybackUsed() {
     const { settings } = this.#ima;
-    return settings.getDisableCustomPlaybackForIOS10Plus() === false
-      && !this.#adElement.querySelector('video');
+    return (
+      settings.getDisableCustomPlaybackForIOS10Plus() === false &&
+      !this.#adElement.querySelector('video')
+    );
   }
 
   private _resetAd() {
@@ -645,7 +672,6 @@ export class Player extends DelegatedEventTarget {
   private _handleMediaElementEvents(event: Event) {
     // always forward volumechange events
     if (!this.#customPlayhead.enabled && event.type !== 'volumechange') return;
-
     if (event.type === 'timeupdate') {
       // ignoring first timeupdate after play
       // because we can be in ad state too early
@@ -653,9 +679,11 @@ export class Player extends DelegatedEventTarget {
         return;
       }
       if (this.#adsManager) {
-        const cuePointsAfterJump = this.#adsManager.getCuePoints().filter((cuePoint) => {
-          return (cuePoint >= 0 && cuePoint < this.#customPlayhead.currentTime);
-        });
+        const cuePointsAfterJump = this.#adsManager
+          .getCuePoints()
+          .filter((cuePoint) => {
+            return cuePoint >= 0 && cuePoint < this.#customPlayhead.currentTime;
+          });
         const cuePointToRemove = cuePointsAfterJump.pop();
         // in case the ad-break lead to an error it cannot be detected which
         // ad break was affected because IMA could've preloaded an ad-break
@@ -667,18 +695,15 @@ export class Player extends DelegatedEventTarget {
         this.#mediaImpressionTriggered = true;
       }
     }
-    if (event.type === 'play'
-      && !this.#mediaStartTriggered
-    ) {
-      this.dispatchEvent(
-        new CustomEvent(PlayerEvent.MEDIA_START)
-      );
+    if (event.type === 'play' && !this.#mediaStartTriggered) {
+      this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_START));
       this.#mediaStartTriggered = true;
     }
     if (event.type === 'ended') {
-      if (this.isCustomPlaybackUsed()
-        && this.#mediaElement.currentTime === this.#mediaElement.duration
-        && this.#cuePoints.indexOf(-1) > -1
+      if (
+        this.isCustomPlaybackUsed() &&
+        this.#mediaElement.currentTime === this.#mediaElement.duration &&
+        this.#cuePoints.indexOf(-1) > -1
       ) {
         /* Fixing a bug with postroll on iOS
          * when a postroll gets started via "contentComplete"
@@ -696,9 +721,10 @@ export class Player extends DelegatedEventTarget {
       }
     }
     // @ts-ignore
-    if (!window.ResizeObserver
-      && this.#playerOptions.autoResize
-      && event.type === 'loadedmetadata'
+    if (
+      !window.ResizeObserver &&
+      this.#playerOptions.autoResize &&
+      event.type === 'loadedmetadata'
     ) {
       // in case ResizeObserver is not supported we want
       // to use at least the size after the media element got
@@ -717,7 +743,7 @@ export class Player extends DelegatedEventTarget {
     const { AdEvent } = this.#ima;
 
     // @ts-ignore
-    switch(event.type) {
+    switch (event.type) {
       case AdEvent.Type.LOADED:
         // For an individual VAST ad inform on "LOADED" to
         // to allow starting the ad manually.
@@ -763,7 +789,7 @@ export class Player extends DelegatedEventTarget {
         }
         break;
       case AdEvent.Type.STARTED:
-        const ad = this.#currentAd = event.getAd();
+        const ad = (this.#currentAd = event.getAd());
         // when playing an ad-pod IMA uses two video-tags
         // and switches between those but does not set volume
         // on both video-tags. Calling setVolume with the
@@ -794,9 +820,9 @@ export class Player extends DelegatedEventTarget {
           return;
         }
         if (
-          this.isCustomPlaybackUsed()
-          && Boolean(this.#currentAd)
-          && this.#currentAd.getAdPodInfo().getTimeOffset() !== -1
+          this.isCustomPlaybackUsed() &&
+          Boolean(this.#currentAd) &&
+          this.#currentAd.getAdPodInfo().getTimeOffset() !== -1
         ) {
           // on iOS it sometimes only triggers ALL_ADS_COMPLETED
           // before CONTENT_RESUME_REQUESTED
@@ -871,7 +897,7 @@ export class Player extends DelegatedEventTarget {
               startWithoutReset: () => {
                 this._playContent();
               }
-            })
+            });
           }
         }
         break;
@@ -892,7 +918,7 @@ export class Player extends DelegatedEventTarget {
             startWithoutReset: () => {
               this._playContent();
             }
-          })
+          });
         } else if (adData.adError && !this.#currentAd) {
           this._playContent();
         }
@@ -907,31 +933,38 @@ export class Player extends DelegatedEventTarget {
   }
 
   private _onAdsManagerLoaded(loadedEvent: google.ima.AdsManagerLoadedEvent) {
-    const { AdEvent, AdErrorEvent: { Type: { AD_ERROR } } } = this.#ima;
+    const {
+      AdEvent,
+      AdErrorEvent: {
+        Type: { AD_ERROR }
+      }
+    } = this.#ima;
     window.clearTimeout(this.#adsManagerLoadedTimeout);
-    const adsManager = this.#adsManager = loadedEvent.getAdsManager(
-      this.#customPlayhead, this.#adsRenderingSettings
-    );
+    const adsManager = (this.#adsManager = loadedEvent.getAdsManager(
+      this.#customPlayhead,
+      this.#adsRenderingSettings
+    ));
 
     Object.keys(AdEvent.Type).forEach((imaEventName) => {
       adsManager.addEventListener(AdEvent.Type[imaEventName], (event) => {
-        this._handleAdsManagerEvents(
-          event
-        );
+        this._handleAdsManagerEvents(event);
         if (PlayerEvent[imaEventName]) {
-          const isEventWithAdData = ['LOG', 'AD_PROGRESS'].indexOf(imaEventName) > -1;
-          this.dispatchEvent(new CustomEvent(PlayerEvent[imaEventName], {
-            detail: {
-              ad: event.getAd() || this.#currentAd,
-              adData: isEventWithAdData ? event.getAdData() : {}
-            }
-          }));
+          const isEventWithAdData =
+            ['LOG', 'AD_PROGRESS'].indexOf(imaEventName) > -1;
+          this.dispatchEvent(
+            new CustomEvent(PlayerEvent[imaEventName], {
+              detail: {
+                ad: event.getAd() || this.#currentAd,
+                adData: isEventWithAdData ? event.getAdData() : {}
+              }
+            })
+          );
         }
       });
     });
-    adsManager.addEventListener(AD_ERROR, (event) => this._onAdError(
-      this._createPlayerErrorFromImaErrorEvent(event)
-    ));
+    adsManager.addEventListener(AD_ERROR, (event) =>
+      this._onAdError(this._createPlayerErrorFromImaErrorEvent(event))
+    );
 
     // start ad playback
     try {
@@ -954,15 +987,13 @@ export class Player extends DelegatedEventTarget {
 
   private _startAdsManager() {
     if (!this.#mediaStartTriggered) {
-      this.dispatchEvent(
-        new CustomEvent(PlayerEvent.MEDIA_START)
-      );
+      this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_START));
       this.#mediaStartTriggered = true;
     }
     if (this.#adsManager) {
       try {
         this.#adsManager.start();
-      } catch(error) {
+      } catch (error) {
         this._onAdError(new PlayerError(error.message));
       }
     } else {
@@ -975,9 +1006,7 @@ export class Player extends DelegatedEventTarget {
       this.#mediaImpressionTriggered = false;
       this.#mediaStartTriggered = false;
       this.#customPlaybackTimeAdjustedOnEnded = false;
-      this.dispatchEvent(
-        new CustomEvent(PlayerEvent.MEDIA_STOP)
-      );
+      this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_STOP));
     }, 1);
   }
 
@@ -1023,15 +1052,15 @@ export class Player extends DelegatedEventTarget {
 
   private _getViewMode() {
     if (
-      document.fullscreenElement // Standard syntax
+      document.fullscreenElement || // Standard syntax
       // @ts-ignore
-      || document.webkitFullscreenElement // Chrome, Safari and Opera synta
+      document.webkitFullscreenElement || // Chrome, Safari and Opera synta
       // @ts-ignore
-      || document.mozFullScreenElement // Firefox syntax
+      document.mozFullScreenElement || // Firefox syntax
       // @ts-ignore
-      || document.msFullscreenElement // IE/Edge syntax
+      document.msFullscreenElement || // IE/Edge syntax
       // @ts-ignore
-      || this.#mediaElement.webkitDisplayingFullscreen // Video in fullscreen, e.g. Safari iOS
+      this.#mediaElement.webkitDisplayingFullscreen // Video in fullscreen, e.g. Safari iOS
     ) {
       return this.#ima.ViewMode.FULLSCREEN;
     }
@@ -1059,7 +1088,7 @@ export class Player extends DelegatedEventTarget {
         // somehow the above "pause()" does not send out pause event
         this.dispatchEvent(new CustomEvent('pause'));
       }
-      this.#wasExternallyPaused = false
+      this.#wasExternallyPaused = false;
     }
   }
 
@@ -1068,15 +1097,18 @@ export class Player extends DelegatedEventTarget {
     const playerError = new PlayerError(error.getMessage());
     playerError.type = error.getType();
     playerError.errorCode = error.getErrorCode();
-    playerError.vastErrorCode = error.getVastErrorCode && error.getVastErrorCode();
+    playerError.vastErrorCode =
+      error.getVastErrorCode && error.getVastErrorCode();
     playerError.innerError = error.getInnerError();
     return playerError;
   }
 
   private _onAdError(error: PlayerError) {
-    this.dispatchEvent(new CustomEvent(PlayerEvent.AD_ERROR, {
-      detail: { error }
-    }));
+    this.dispatchEvent(
+      new CustomEvent(PlayerEvent.AD_ERROR, {
+        detail: { error }
+      })
+    );
     this._resetAd();
     if (this.#startAdCallback) {
       this.#startAdCallback({
@@ -1087,7 +1119,7 @@ export class Player extends DelegatedEventTarget {
         startWithoutReset: () => {
           this._playContent();
         }
-      })
+      });
     } else {
       this._playContent();
     }
