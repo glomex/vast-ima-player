@@ -191,8 +191,8 @@ export class Player extends DelegatedEventTarget {
   #customPlayhead: CustomPlayhead;
   #adsRenderingSettings: google.ima.AdsRenderingSettings;
   #ima: ImaSdk;
-  #adDisplayContainer: google.ima.AdDisplayContainer;
-  #adsManager: google.ima.AdsManager;
+  #adDisplayContainer: google.ima.AdDisplayContainer | undefined;
+  #adsManager: google.ima.AdsManager | undefined;
   #width: number;
   #height: number;
   #adsLoader: google.ima.AdsLoader;
@@ -255,6 +255,7 @@ export class Player extends DelegatedEventTarget {
     });
 
     this._onAdsManagerLoaded = this._onAdsManagerLoaded.bind(this);
+    this._onAdsLoaderError = this._onAdsLoaderError.bind(this);
 
     // initial synchronization of width / height
     const { offsetHeight, offsetWidth } = this.#mediaElement;
@@ -300,7 +301,9 @@ export class Player extends DelegatedEventTarget {
         .then(ready)
         .catch(ready);
     }
-    this.#adDisplayContainer.initialize();
+    if (this.#adDisplayContainer) {
+      this.#adDisplayContainer.initialize();
+    }
   }
 
   /**
@@ -578,8 +581,10 @@ export class Player extends DelegatedEventTarget {
           this._resetIma();
           setTimeout(() => resolve(), 50);
         };
-        this.#adsManager.stop();
-        this.#adsManager.discardAdBreak();
+        if (this.#adsManager) {
+          this.#adsManager.stop();
+          this.#adsManager.discardAdBreak();
+        }
         this.#mediaElement.addEventListener('canplay', onCanPlay);
       });
     }
@@ -593,6 +598,25 @@ export class Player extends DelegatedEventTarget {
       this.#adsLoader.contentComplete();
     }
     this.#adsManager = undefined;
+
+    if (this.#adsLoader) {
+      this.#adsLoader.destroy();
+      this.#adsLoader.removeEventListener(
+        this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+        this._onAdsManagerLoaded,
+        false
+      );
+      this.#adsLoader.removeEventListener(
+        this.#ima.AdErrorEvent.Type.AD_ERROR,
+        this._onAdsLoaderError,
+        false
+      );
+    }
+
+    if (this.#adDisplayContainer) {
+      this.#adDisplayContainer.destroy();
+    }
+
     this.#adElement.innerHTML = '';
     this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
       this.#adElement,
@@ -603,6 +627,7 @@ export class Player extends DelegatedEventTarget {
       // allows to override the 'Learn More' button on mobile
       this.#playerOptions.clickTrackingElement
     );
+
     this.#adElement.style.display = 'none';
     this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
 
@@ -613,9 +638,7 @@ export class Player extends DelegatedEventTarget {
     );
     this.#adsLoader.addEventListener(
       this.#ima.AdErrorEvent.Type.AD_ERROR,
-      (event) => {
-        this._onAdError(this._createPlayerErrorFromImaErrorEvent(event));
-      },
+      this._onAdsLoaderError,
       false
     );
   }
@@ -637,7 +660,7 @@ export class Player extends DelegatedEventTarget {
       this._onAdsManagerLoaded,
       false
     );
-    this.#adDisplayContainer.destroy();
+    this.#adDisplayContainer?.destroy();
     this.#adsLoader.destroy();
     this.#mediaImpressionTriggered = false;
     this.#customPlaybackTimeAdjustedOnEnded = false;
@@ -932,6 +955,10 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  private _onAdsLoaderError(event: google.ima.AdErrorEvent) {
+    this._onAdError(this._createPlayerErrorFromImaErrorEvent(event));
+  }
+
   private _onAdsManagerLoaded(loadedEvent: google.ima.AdsManagerLoadedEvent) {
     const {
       AdEvent,
@@ -976,7 +1003,7 @@ export class Player extends DelegatedEventTarget {
       // ensure to initialize the ad container at least once before
       // starting it. For playback with sound it requires a synchronous
       // .activate()
-      this.#adDisplayContainer.initialize();
+      this.#adDisplayContainer?.initialize();
       if (!this.#startAdCallback) {
         this._startAdsManager();
       }
