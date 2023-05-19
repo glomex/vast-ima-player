@@ -1,6 +1,6 @@
 {
   "name": "@glomex/vast-ima-player",
-  "version": "1.19.3",
+  "version": "1.20.0",
   "description": "Convenience wrapper for advertising video/audio content with Google IMA",
   "source": "src/index.ts",
   "main": "dist/vast-ima-player.js",
