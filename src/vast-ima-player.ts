@@ -1,4 +1,8 @@
-/* tslint:disable:max-classes-per-file */
+/**
+ * tslint:disable:max-classes-per-file
+ *
+ * @format
+ */
 
 import type { ImaSdk, google } from '@alugha/ima';
 import CustomEvent from '@ungap/custom-event';
@@ -350,6 +354,27 @@ export class Player extends DelegatedEventTarget {
       this.#mediaElement.currentTime = 0;
     }
     this.reset().then(() => {
+      this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
+        this.#adElement,
+        // used as single element for linear ad playback on iOS
+        this.#playerOptions.disableCustomPlaybackForIOS10Plus
+          ? undefined
+          : this.#mediaElement,
+        // allows to override the 'Learn More' button on mobile
+        this.#playerOptions.clickTrackingElement
+      );
+      this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
+
+      this.#adsLoader.addEventListener(
+        this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+        this._onAdsManagerLoaded,
+        false
+      );
+      this.#adsLoader.addEventListener(
+        this.#ima.AdErrorEvent.Type.AD_ERROR,
+        this._onAdsLoaderError,
+        false
+      );
       this.#startAdCallback = startAdCallback;
       adsRequest.linearAdSlotWidth = this.#width;
       adsRequest.linearAdSlotHeight = this.#height;
@@ -543,22 +568,16 @@ export class Player extends DelegatedEventTarget {
   }
 
   /**
-   * Cleans up current ad and ad manager session.
+   * Cleans up current ad and ad manager session or the complete IMA (via force).
    *
    * Externally call this function with "force = true" when you want to switch
-   * the content source before doing another "playAds" or "loadAds",
-   * so that it does a full cleanup on iOS with a single-video-tag.
+   * the content source or move the player to another DOM node before doing
+   * another "playAds" or "loadAds", so that it does a full cleanup.
    *
-   * @param force - enforces a full cleanup on iOS with single video-tag. Useful when a new source will be assigned afterwards.
+   * @param force - enforce a full cleanup
    * @returns a promise which resolves after all the cleanup work is done
    */
   reset(force: boolean = false) {
-    const isSpecialReset =
-      this.isCustomPlaybackUsed() &&
-      this.#adsManager &&
-      this.#currentAd &&
-      this.#currentAd.isLinear() &&
-      force;
     if (force) {
       this.#mediaImpressionTriggered = false;
       this.#mediaStartTriggered = false;
@@ -568,37 +587,19 @@ export class Player extends DelegatedEventTarget {
     this.#cuePoints = [];
     this.#wasExternallyPaused = false;
     this.#startAdCallback = undefined;
-    if (isSpecialReset) {
-      return new Promise<void>((resolve) => {
-        // On iOS with single video tag we first need to
-        // finish "adsManager.stop" during ad-playback to get back
-        // to the content before calling "adsManager.destroy".
-        // Otherwise it would use the current displayed ad as content.
-        // We also wait until canplay + 50ms to ensure that IMA
-        // is done resetting
-        const onCanPlay = () => {
-          this.#mediaElement.removeEventListener('canplay', onCanPlay);
-          this._resetIma();
-          setTimeout(() => resolve(), 50);
-        };
-        if (this.#adsManager) {
-          this.#adsManager.stop();
-          this.#adsManager.discardAdBreak();
-        }
-        this.#mediaElement.addEventListener('canplay', onCanPlay);
-      });
-    }
-    this._resetIma();
-    return Promise.resolve();
-  }
-
-  private _resetIma() {
+    // always destroy ads-manager
     if (this.#adsManager) {
       this.#adsManager.destroy();
       this.#adsLoader.contentComplete();
     }
     this.#adsManager = undefined;
+    if (force) {
+      this._resetIma();
+    }
+    return Promise.resolve();
+  }
 
+  private _resetIma() {
     if (this.#adsLoader) {
       this.#adsLoader.destroy();
       this.#adsLoader.removeEventListener(
@@ -617,37 +618,14 @@ export class Player extends DelegatedEventTarget {
       this.#adDisplayContainer.destroy();
     }
 
-    this.#adElement.innerHTML = '';
-    this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
-      this.#adElement,
-      // used as single element for linear ad playback on iOS
-      this.#playerOptions.disableCustomPlaybackForIOS10Plus
-        ? undefined
-        : this.#mediaElement,
-      // allows to override the 'Learn More' button on mobile
-      this.#playerOptions.clickTrackingElement
-    );
-
     this.#adElement.style.display = 'none';
-    this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
-
-    this.#adsLoader.addEventListener(
-      this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-      this._onAdsManagerLoaded,
-      false
-    );
-    this.#adsLoader.addEventListener(
-      this.#ima.AdErrorEvent.Type.AD_ERROR,
-      this._onAdsLoaderError,
-      false
-    );
   }
 
   /**
    * Completely destroys this instance. It is unusable after that.
    */
   destroy() {
-    this.reset();
+    this.reset(true);
     this.#customPlayhead.destroy();
     MEDIA_ELEMENT_EVENTS.forEach((eventName) => {
       this.#mediaElement.removeEventListener(
