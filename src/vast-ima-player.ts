@@ -595,7 +595,6 @@ export class Player extends DelegatedEventTarget {
     if (force) {
       this._resetIma();
     }
-    return Promise.resolve();
   }
 
   private _resetIma() {
