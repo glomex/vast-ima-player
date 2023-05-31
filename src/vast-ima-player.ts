@@ -353,63 +353,62 @@ export class Player extends DelegatedEventTarget {
       this.#customPlayhead.reset();
       this.#mediaElement.currentTime = 0;
     }
-    this.reset().then(() => {
-      this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
-        this.#adElement,
-        // used as single element for linear ad playback on iOS
-        this.#playerOptions.disableCustomPlaybackForIOS10Plus
-          ? undefined
-          : this.#mediaElement,
-        // allows to override the 'Learn More' button on mobile
-        this.#playerOptions.clickTrackingElement
+    this.reset();
+    this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
+      this.#adElement,
+      // used as single element for linear ad playback on iOS
+      this.#playerOptions.disableCustomPlaybackForIOS10Plus
+        ? undefined
+        : this.#mediaElement,
+      // allows to override the 'Learn More' button on mobile
+      this.#playerOptions.clickTrackingElement
+    );
+    this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
+
+    this.#adsLoader.addEventListener(
+      this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+      this._onAdsManagerLoaded,
+      false
+    );
+    this.#adsLoader.addEventListener(
+      this.#ima.AdErrorEvent.Type.AD_ERROR,
+      this._onAdsLoaderError,
+      false
+    );
+    this.#startAdCallback = startAdCallback;
+    adsRequest.linearAdSlotWidth = this.#width;
+    adsRequest.linearAdSlotHeight = this.#height;
+    adsRequest.nonLinearAdSlotWidth = this.#width;
+    adsRequest.nonLinearAdSlotHeight = this.#height;
+
+    // see version 3.442.0 changelog about postroll prefetching
+    // fixes issue with a disappearing nonlinear preroll that gets
+    // followed by a linear postroll
+    // https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side/history
+    if (adsRequest.contentDuration == null) {
+      adsRequest.contentDuration = -3;
+    }
+
+    // trigger an error after 5s in case adsManagerLoaded
+    // does not come up, so that content playback starts
+    this.#adsManagerLoadedTimeout = window.setTimeout(() => {
+      const error = new PlayerError(
+        `No adsManagerLoadedEvent within ${ADS_MANAGER_LOADED_TIMEOUT}ms.`
       );
-      this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
-
-      this.#adsLoader.addEventListener(
-        this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-        this._onAdsManagerLoaded,
-        false
+      error.errorCode = PlayerError.ERROR_CODE_ADS_MANAGER_LOADED_TIMEOUT;
+      this._onAdError(error);
+    }, ADS_MANAGER_LOADED_TIMEOUT);
+    // trigger an error when no error / ad break ready / ... event
+    // occurred within 5s after requesting ads
+    this.#requestAdsTimeout = window.setTimeout(() => {
+      const error = new PlayerError(
+        `No response for ads-request within ${REQUEST_ADS_TIMEOUT}ms.`
       );
-      this.#adsLoader.addEventListener(
-        this.#ima.AdErrorEvent.Type.AD_ERROR,
-        this._onAdsLoaderError,
-        false
-      );
-      this.#startAdCallback = startAdCallback;
-      adsRequest.linearAdSlotWidth = this.#width;
-      adsRequest.linearAdSlotHeight = this.#height;
-      adsRequest.nonLinearAdSlotWidth = this.#width;
-      adsRequest.nonLinearAdSlotHeight = this.#height;
+      error.errorCode = PlayerError.ERROR_CODE_REQUEST_ADS_TIMEOUT;
+      this._onAdError(error);
+    }, REQUEST_ADS_TIMEOUT);
 
-      // see version 3.442.0 changelog about postroll prefetching
-      // fixes issue with a disappearing nonlinear preroll that gets
-      // followed by a linear postroll
-      // https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side/history
-      if (adsRequest.contentDuration == null) {
-        adsRequest.contentDuration = -3;
-      }
-
-      // trigger an error after 5s in case adsManagerLoaded
-      // does not come up, so that content playback starts
-      this.#adsManagerLoadedTimeout = window.setTimeout(() => {
-        const error = new PlayerError(
-          `No adsManagerLoadedEvent within ${ADS_MANAGER_LOADED_TIMEOUT}ms.`
-        );
-        error.errorCode = PlayerError.ERROR_CODE_ADS_MANAGER_LOADED_TIMEOUT;
-        this._onAdError(error);
-      }, ADS_MANAGER_LOADED_TIMEOUT);
-      // trigger an error when no error / ad break ready / ... event
-      // occurred within 5s after requesting ads
-      this.#requestAdsTimeout = window.setTimeout(() => {
-        const error = new PlayerError(
-          `No response for ads-request within ${REQUEST_ADS_TIMEOUT}ms.`
-        );
-        error.errorCode = PlayerError.ERROR_CODE_REQUEST_ADS_TIMEOUT;
-        this._onAdError(error);
-      }, REQUEST_ADS_TIMEOUT);
-
-      this.#adsLoader.requestAds(adsRequest);
-    });
+    this.#adsLoader.requestAds(adsRequest);
   }
 
   skipAd() {
