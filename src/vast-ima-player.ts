@@ -632,19 +632,17 @@ export class Player extends DelegatedEventTarget {
         this._handleMediaElementEvents
       );
     });
-    this.#adsLoader.removeEventListener(
+    this.#adsLoader?.removeEventListener(
       this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
       this._onAdsManagerLoaded,
       false
     );
     this.#adDisplayContainer?.destroy();
-    this.#adsLoader.destroy();
+    this.#adsLoader?.destroy();
     this.#mediaImpressionTriggered = false;
     this.#customPlaybackTimeAdjustedOnEnded = false;
     this.#mediaStartTriggered = false;
-    if (this.#resizeObserver) {
-      this.#resizeObserver.disconnect();
-    }
+    this.#resizeObserver?.disconnect();
   }
 
   isCustomPlaybackUsed() {
