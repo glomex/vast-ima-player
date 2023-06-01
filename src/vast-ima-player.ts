@@ -305,9 +305,6 @@ export class Player extends DelegatedEventTarget {
         .then(ready)
         .catch(ready);
     }
-    if (this.#adDisplayContainer) {
-      this.#adDisplayContainer.initialize();
-    }
   }
 
   /**
@@ -319,7 +316,6 @@ export class Player extends DelegatedEventTarget {
    * - With a single VMAP at the beginning
    */
   playAds(adsRequest: google.ima.AdsRequest) {
-    this.#ima.settings.setAutoPlayAdBreaks(true);
     this._requestAds(adsRequest);
   }
 
@@ -334,8 +330,7 @@ export class Player extends DelegatedEventTarget {
    * it won't play the ad.
    */
   loadAds(adsRequest: google.ima.AdsRequest, startAdCallback: StartAdCallback) {
-    this.#ima.settings.setAutoPlayAdBreaks(false);
-    this._requestAds(adsRequest, startAdCallback);
+    this._requestAds(adsRequest, false, startAdCallback);
   }
 
   private _mediaElementPlay() {
@@ -346,35 +341,21 @@ export class Player extends DelegatedEventTarget {
 
   private _requestAds(
     adsRequest: google.ima.AdsRequest,
+    autoPlayAdBreaks: boolean = true,
     startAdCallback?: StartAdCallback
   ) {
+    this.reset();
+    this._setupIma();
+    // it is important that this is set after
+    // a new AdsLoader and AdDisplayContainer
+    // was created because preloading ads wouldn't
+    // work as expected for multiple ads
+    this.#ima.settings.setAutoPlayAdBreaks(autoPlayAdBreaks);
     // in case of replay we go back to start
     if (this.#mediaElement.ended) {
       this.#customPlayhead.reset();
       this.#mediaElement.currentTime = 0;
     }
-    this.reset();
-    this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
-      this.#adElement,
-      // used as single element for linear ad playback on iOS
-      this.#playerOptions.disableCustomPlaybackForIOS10Plus
-        ? undefined
-        : this.#mediaElement,
-      // allows to override the 'Learn More' button on mobile
-      this.#playerOptions.clickTrackingElement
-    );
-    this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
-
-    this.#adsLoader.addEventListener(
-      this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-      this._onAdsManagerLoaded,
-      false
-    );
-    this.#adsLoader.addEventListener(
-      this.#ima.AdErrorEvent.Type.AD_ERROR,
-      this._onAdsLoaderError,
-      false
-    );
     this.#startAdCallback = startAdCallback;
     adsRequest.linearAdSlotWidth = this.#width;
     adsRequest.linearAdSlotHeight = this.#height;
@@ -409,6 +390,29 @@ export class Player extends DelegatedEventTarget {
     }, REQUEST_ADS_TIMEOUT);
 
     this.#adsLoader.requestAds(adsRequest);
+  }
+
+  private _setupIma() {
+    this.#adDisplayContainer = new this.#ima.AdDisplayContainer(
+      this.#adElement,
+      // used as single element for linear ad playback on iOS
+      this.#playerOptions.disableCustomPlaybackForIOS10Plus
+        ? undefined
+        : this.#mediaElement,
+      // allows to override the 'Learn More' button on mobile
+      this.#playerOptions.clickTrackingElement
+    );
+    this.#adsLoader = new this.#ima.AdsLoader(this.#adDisplayContainer);
+    this.#adsLoader.addEventListener(
+      this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+      this._onAdsManagerLoaded,
+      false
+    );
+    this.#adsLoader.addEventListener(
+      this.#ima.AdErrorEvent.Type.AD_ERROR,
+      this._onAdsLoaderError,
+      false
+    );
   }
 
   skipAd() {
@@ -589,17 +593,21 @@ export class Player extends DelegatedEventTarget {
     // always destroy ads-manager
     if (this.#adsManager) {
       this.#adsManager.destroy();
-      this.#adsLoader.contentComplete();
     }
     this.#adsManager = undefined;
+    // also reset autoplay ad breaks
+    // because setting it to false again
+    // in _setupIma would not properly
+    // reset IMA
+    this.#ima.settings.setAutoPlayAdBreaks(true);
     if (force) {
       this._resetIma();
     }
+    this.#adElement.style.display = 'none';
   }
 
   private _resetIma() {
     if (this.#adsLoader) {
-      this.#adsLoader.destroy();
       this.#adsLoader.removeEventListener(
         this.#ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
         this._onAdsManagerLoaded,
@@ -610,13 +618,12 @@ export class Player extends DelegatedEventTarget {
         this._onAdsLoaderError,
         false
       );
+      this.#adsLoader.destroy();
     }
 
     if (this.#adDisplayContainer) {
       this.#adDisplayContainer.destroy();
     }
-
-    this.#adElement.style.display = 'none';
   }
 
   /**
