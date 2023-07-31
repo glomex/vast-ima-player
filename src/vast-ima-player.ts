@@ -206,6 +206,7 @@ export class Player extends DelegatedEventTarget {
   #loadedAd: google.ima.Ad;
   #mediaStartTriggered: boolean = false;
   #mediaImpressionTriggered: boolean = false;
+  #mediaStopTriggered: boolean = false;
   #mediaInActivation: boolean = false;
   #customPlaybackTimeAdjustedOnEnded: boolean = false;
   #cuePoints: number[] = [];
@@ -584,6 +585,7 @@ export class Player extends DelegatedEventTarget {
     if (force) {
       this.#mediaImpressionTriggered = false;
       this.#mediaStartTriggered = false;
+      this.#mediaStopTriggered = false;
       this.#customPlaybackTimeAdjustedOnEnded = false;
     }
     this._resetAd();
@@ -648,6 +650,7 @@ export class Player extends DelegatedEventTarget {
     this.#mediaImpressionTriggered = false;
     this.#customPlaybackTimeAdjustedOnEnded = false;
     this.#mediaStartTriggered = false;
+    this.#mediaStopTriggered = false;
     this.#resizeObserver?.disconnect();
   }
 
@@ -676,6 +679,9 @@ export class Player extends DelegatedEventTarget {
   private _handleMediaElementEvents(event: Event) {
     // always forward volumechange events
     if (!this.#customPlayhead.enabled && event.type !== 'volumechange') return;
+    // do not forward playing when the mediaElement is paused
+    // relevant when autoplay is not allowed in Safari / iOS
+    if (event.type === 'playing' && this.#mediaElement.paused) return;
     if (event.type === 'timeupdate') {
       // ignoring first timeupdate after play
       // because we can be in ad state too early
@@ -703,26 +709,24 @@ export class Player extends DelegatedEventTarget {
       this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_START));
       this.#mediaStartTriggered = true;
     }
-    if (event.type === 'ended') {
-      if (
-        this.isCustomPlaybackUsed() &&
-        this.#mediaElement.currentTime === this.#mediaElement.duration &&
-        this.#cuePoints.indexOf(-1) > -1
-      ) {
-        /* Fixing a bug with postroll on iOS
-         * when a postroll gets started via "contentComplete"
-         * and a single video-tag is used IMA does not reset
-         * back to the content after the postroll finished.
-         * Setting the time of the video tag a little shorter
-         * than the duration, so that the video-tag is not set to "ended".
-         */
-        this.#mediaElement.currentTime = this.#mediaElement.duration - 0.00001;
-        this.#customPlaybackTimeAdjustedOnEnded = true;
-      }
-      this.#adsLoader.contentComplete();
-      if (!this.#adsManager) {
-        this._mediaStop();
-      }
+    if (
+      event.type === 'timeupdate' &&
+      this.#mediaElement.ended &&
+      !this.#mediaStopTriggered &&
+      this.#mediaStartTriggered
+    ) {
+      // in Safari it sometimes can happen that ended is not triggered
+      // when seeked to the end of the video, we simulate it here
+      this._onEnded();
+      return;
+    }
+    if (
+      event.type === 'ended' &&
+      !this.#mediaStopTriggered &&
+      this.#mediaStartTriggered
+    ) {
+      this._onEnded();
+      return;
     }
     // @ts-ignore
     if (
@@ -1009,13 +1013,36 @@ export class Player extends DelegatedEventTarget {
     }
   }
 
+  private _onEnded() {
+    if (
+      this.isCustomPlaybackUsed() &&
+      this.#mediaElement.currentTime === this.#mediaElement.duration &&
+      this.#cuePoints.indexOf(-1) > -1
+    ) {
+      /* Fixing a bug with postroll on iOS
+       * when a postroll gets started via "contentComplete"
+       * and a single video-tag is used IMA does not reset
+       * back to the content after the postroll finished.
+       * Setting the time of the video tag a little shorter
+       * than the duration, so that the video-tag is not set to "ended".
+       */
+      this.#mediaElement.currentTime = this.#mediaElement.duration - 0.00001;
+      this.#customPlaybackTimeAdjustedOnEnded = true;
+    }
+    this.dispatchEvent(new CustomEvent('ended'));
+    this.#adsLoader.contentComplete();
+    if (!this.#adsManager) {
+      this._mediaStop();
+    }
+  }
+
   private _mediaStop() {
-    setTimeout(() => {
-      this.#mediaImpressionTriggered = false;
-      this.#mediaStartTriggered = false;
-      this.#customPlaybackTimeAdjustedOnEnded = false;
-      this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_STOP));
-    }, 1);
+    if (this.#mediaStopTriggered) return;
+    this.#mediaStopTriggered = true;
+    this.#mediaImpressionTriggered = false;
+    this.#mediaStartTriggered = false;
+    this.#customPlaybackTimeAdjustedOnEnded = false;
+    this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_STOP));
   }
 
   private _resizeObserverCallback(entries) {
