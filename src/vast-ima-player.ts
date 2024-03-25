@@ -884,6 +884,7 @@ export class Player extends DelegatedEventTarget {
         // CONTENT_RESUME_REQUESTED also gets triggered when "start"
         // is not called on preroll when "loadAds" is used
         if (adPlayedPreviously) {
+          this.#wasExternallyPaused = false;
           this._playContent();
         }
         break;
