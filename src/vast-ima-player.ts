@@ -434,7 +434,10 @@ export class Player extends DelegatedEventTarget {
     this.#wasExternallyPaused = false;
     if (!this.#customPlayhead.enabled && this.#adsManager) {
       this.#adsManager.resume();
-    } else {
+    } else if (!this.#adsManagerLoadedTimeout) {
+      // do not trigger play during ad loading process
+      // so when "play" gets called externally twice it does
+      // not start the content playback before the ad is loaded
       this._mediaElementPlay()
         .then(() => {
           // empty
@@ -662,6 +665,8 @@ export class Player extends DelegatedEventTarget {
   private _resetAd() {
     window.clearTimeout(this.#adsManagerLoadedTimeout);
     window.clearTimeout(this.#requestAdsTimeout);
+    this.#adsManagerLoadedTimeout = undefined;
+    this.#requestAdsTimeout = undefined;
     this.#currentAd = undefined;
     this.#adCurrentTime = undefined;
     this.#adDuration = undefined;
