@@ -704,7 +704,11 @@ export class Player extends DelegatedEventTarget {
         this.#mediaImpressionTriggered = true;
       }
     }
-    if (event.type === 'play' && !this.#mediaStartTriggered) {
+    if (
+      event.type === 'play' &&
+      !this.#mediaStartTriggered &&
+      !this.#mediaInActivation // we don't want to trigger "MEDIA_START" during activation phase
+    ) {
       this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_START));
       this.#mediaStartTriggered = true;
     }
