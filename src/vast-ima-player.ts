@@ -682,11 +682,6 @@ export class Player extends DelegatedEventTarget {
     // always forward volumechange events
     if (!this.#customPlayhead.enabled && event.type !== 'volumechange') return;
     if (event.type === 'timeupdate') {
-      // ignoring first timeupdate after play
-      // because we can be in ad state too early
-      if (this.#mediaElement.currentTime < IGNORE_UNTIL_CURRENT_TIME) {
-        return;
-      }
       if (this.#adsManager) {
         const cuePointsAfterJump = this.#adsManager
           .getCuePoints()
@@ -699,7 +694,13 @@ export class Player extends DelegatedEventTarget {
         // without emitting an event for it
         this._adjustCuePoints(cuePointToRemove);
       }
-      if (!this.#mediaImpressionTriggered && this.#mediaStartTriggered) {
+      if (
+        !this.#mediaImpressionTriggered &&
+        this.#mediaStartTriggered &&
+        // ignoring first timeupdate after play
+        // because we can be in ad state too early
+        this.#mediaElement.currentTime < IGNORE_UNTIL_CURRENT_TIME
+      ) {
         this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_IMPRESSION));
         this.#mediaImpressionTriggered = true;
       }
