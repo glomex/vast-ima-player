@@ -699,7 +699,7 @@ export class Player extends DelegatedEventTarget {
         this.#mediaStartTriggered &&
         // ignoring first timeupdate after play
         // because we can be in ad state too early
-        this.#mediaElement.currentTime < IGNORE_UNTIL_CURRENT_TIME
+        this.#mediaElement.currentTime >= IGNORE_UNTIL_CURRENT_TIME
       ) {
         this.dispatchEvent(new CustomEvent(PlayerEvent.MEDIA_IMPRESSION));
         this.#mediaImpressionTriggered = true;
